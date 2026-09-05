@@ -51,7 +51,7 @@
       waterInventory: 0,
       growthStage: 0,
       moodHistory: [],
-      unlockedFairies: [],
+      unlockedFairies: ['sunny', 'storm', 'rain'], // 快樂、生氣、難過三隻基礎情緒仙子一開始就陪伴著孩子
       harvestCount: 0,
       diaryEntries: [],
       lastEntryDate: null,
@@ -877,7 +877,14 @@
     });
   }
 
-  function renderJungleScenario(idx) {
+  function pickAssistFairy() {
+    var pool = state.unlockedFairies.length ? state.unlockedFairies : ['sunny'];
+    var key = pool[Math.floor(Math.random() * pool.length)];
+    return MOODS[key];
+  }
+
+  function renderJungleScenario(idx, excludedOis) {
+    excludedOis = excludedOis || [];
     var sc = SCENARIOS[idx];
     var u = UNITS[sc.unit];
     setJungleTint(u.tint);
@@ -887,13 +894,17 @@
       '<p class="font-label-md text-label-md text-white/90 drop-shadow -mt-space-sm">' + u.prompt + '</p>' +
       '<div class="flex flex-col sm:flex-row gap-space-sm w-full max-w-md" id="jungle-options">' +
       sc.options.map(function (o, oi) {
-        return '<button type="button" data-oi="' + oi + '" class="jungle-opt flex-1 flex flex-col items-center gap-1 px-space-md py-space-md rounded-xl bg-white/90 hover:bg-white shadow-xl active:scale-95 transition-all">' +
+        var isOut = excludedOis.indexOf(oi) !== -1;
+        return '<button type="button" data-oi="' + oi + '" ' + (isOut ? 'disabled' : '') + ' class="jungle-opt flex-1 flex flex-col items-center gap-1 px-space-md py-space-md rounded-xl shadow-xl transition-all ' +
+          (isOut ? 'bg-white/40 opacity-40 grayscale cursor-not-allowed' : 'bg-white/90 hover:bg-white active:scale-95') + '">' +
           '<span class="text-[36px] leading-none">' + o.emoji + '</span>' +
-          '<span class="font-label-md text-label-md text-on-surface">' + o.label + '</span></button>';
+          '<span class="font-label-md text-label-md text-on-surface">' + o.label + '</span>' +
+          (isOut ? '<span class="text-[11px] text-on-surface-variant">✕ 試過了</span>' : '') +
+          '</button>';
       }).join('') + '</div>' +
       '<div id="jungle-feedback" class="min-h-[3rem]"></div>';
     document.getElementById('jungle-content').innerHTML = html;
-    document.querySelectorAll('.jungle-opt').forEach(function (btn) {
+    document.querySelectorAll('.jungle-opt:not(:disabled)').forEach(function (btn) {
       btn.addEventListener('click', function () {
         if (jungleAnswered) return;
         jungleAnswered = true;
@@ -904,24 +915,31 @@
         btn.classList.add('ring-4', choice.correct ? 'ring-primary' : 'ring-secondary');
         if (choice.correct) playSuccess(); else playWrong();
         var fb = document.getElementById('jungle-feedback');
-        fb.innerHTML = '<div class="inline-flex items-center gap-space-xs px-space-md py-space-sm rounded-full bg-white/95 shadow-xl">' +
-          '<span class="font-label-md text-label-md text-on-surface">' + choice.feedback + '</span></div>' +
-          '<div class="mt-space-sm">' +
-          (choice.correct
-            ? '<button type="button" id="jungle-next-btn" class="px-space-lg h-14 rounded-full bg-primary text-on-primary font-label-md text-label-md shadow-xl">' + (idx === SCENARIOS.length - 1 ? '完成冒險 🎉' : '下一關 →') + '</button>'
-            : '<button type="button" id="jungle-retry-btn" class="px-space-lg h-14 rounded-full bg-white text-on-surface font-label-md text-label-md shadow-xl">🔄 再試一次</button>') +
-          '</div>';
-        var nextBtn = document.getElementById('jungle-next-btn');
-        if (nextBtn) nextBtn.addEventListener('click', function () {
-          if (idx === SCENARIOS.length - 1) { jungleStep = 'done'; } else { jungleStep = idx + 1; }
-          jungleAnswered = false;
-          renderJungleStep();
-        });
-        var retryBtn = document.getElementById('jungle-retry-btn');
-        if (retryBtn) retryBtn.addEventListener('click', function () {
-          jungleAnswered = false;
-          renderJungleScenario(idx); // 重試只重來選擇題，不重播漫畫
-        });
+
+        if (choice.correct) {
+          fb.innerHTML = '<div class="inline-flex items-center gap-space-xs px-space-md py-space-sm rounded-full bg-white/95 shadow-xl">' +
+            '<span class="font-label-md text-label-md text-on-surface">' + choice.feedback + '</span></div>' +
+            '<div class="mt-space-sm"><button type="button" id="jungle-next-btn" class="px-space-lg h-14 rounded-full bg-primary text-on-primary font-label-md text-label-md shadow-xl">' +
+            (idx === SCENARIOS.length - 1 ? '完成冒險 🎉' : '下一關 →') + '</button></div>';
+          document.getElementById('jungle-next-btn').addEventListener('click', function () {
+            if (idx === SCENARIOS.length - 1) { jungleStep = 'done'; } else { jungleStep = idx + 1; }
+            jungleAnswered = false;
+            renderJungleStep();
+          });
+        } else {
+          // 花仙子組隊出動助攻：排除這個答錯的選項，縮小範圍幫學生再試一次
+          var fairy = pickAssistFairy();
+          var nextExcluded = excludedOis.concat([oi]);
+          fb.innerHTML = '<div class="flex items-center gap-space-sm px-space-md py-space-sm rounded-2xl bg-white/95 shadow-xl text-left max-w-sm mx-auto">' +
+            '<img src="' + fairy.fairyImg + '" alt="' + fairy.fairyName + '" class="w-14 h-14 rounded-full object-cover flex-shrink-0 fairy-float" />' +
+            '<div><p class="font-label-sm text-label-sm text-primary font-bold">' + fairy.fairyName + ' 飛來幫忙！</p>' +
+            '<p class="font-body-sm text-body-sm text-on-surface">' + choice.feedback + '</p></div></div>' +
+            '<div class="mt-space-sm"><button type="button" id="jungle-retry-btn" class="px-space-lg h-14 rounded-full bg-white text-on-surface font-label-md text-label-md shadow-xl">🔄 再試一次</button></div>';
+          document.getElementById('jungle-retry-btn').addEventListener('click', function () {
+            jungleAnswered = false;
+            renderJungleScenario(idx, nextExcluded); // 重試只重來選擇題，不重播漫畫
+          });
+        }
       });
     });
   }
