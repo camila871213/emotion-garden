@@ -1,0 +1,47 @@
+/* 心靈植癒園 - 自訂樣式(Tailwind 涵蓋不到的動畫與細節) */
+
+.view[hidden] { display: none; }
+
+/* 呼吸圈動畫 */
+.breath-ring {
+  width: 220px;
+  height: 220px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 50% 40%, rgba(171,206,190,0.55), rgba(50,83,70,0.15));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 4s ease-in-out;
+  transform: scale(0.72);
+}
+.breath-ring.inhale { transform: scale(1); }
+.breath-ring.exhale { transform: scale(0.72); }
+
+@keyframes dewFloat {
+  0% { opacity: 0; transform: translateY(0); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-36px); }
+}
+.dew-fx-play {
+  animation: dewFloat 1s ease-out forwards;
+}
+
+@keyframes plantPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+.plant-grow-fx {
+  animation: plantPulse 0.6s ease-out;
+}
+
+@keyframes fairyFloat {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+.fairy-float {
+  animation: fairyFloat 3.6s ease-in-out infinite;
+}
+
+.fade-swap {
+  transition: opacity 0.2s ease;
+}
