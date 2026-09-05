@@ -18,6 +18,7 @@
               fairyDesc: '宛如清透水滴與倒掛藍鈴花蕾的水之精靈，晶瑩澄澈，溫柔接納所有失落與淚水。' },
     breeze: { label: '平靜微風', sub: '放鬆舒服',   icon: 'air',           fill: false, swatch: 'bg-primary-fixed text-primary',
               fairyName: '四葉草仙子', fairyImg: 'assets/fairies/breeze.png', fairyMeadowImg: 'assets/fairies/breeze-jump.png',
+              hatchFrames: { dir: 'assets/hatch/breeze', count: 56, fps: 12 },
               skillName: '深呼吸防護', skillDesc: '面對環境感官過載時，創造安定呼吸的心靈淨化場域。',
               fairyDesc: '舒展平穩的四葉草精靈，自然發散微風氣息，提醒我們在喧鬧環境中安頓心靈節奏。' },
     fog:    { label: '害怕迷霧', sub: '有些不知所措', icon: 'foggy',       fill: false, swatch: 'bg-surface-container-high text-outline',
@@ -388,9 +389,10 @@
     meadowInitialized = false; // 有新仙子加入花園居民，重新整理草地
     renderGarden();
     playSuccess();
+    var imgClass = m.hatchFrames ? 'inline-block w-40 h-40 object-contain drop-shadow-lg' : 'char-pop-in inline-block w-40 h-40 object-contain drop-shadow-lg';
     showModal(
       '<div class="text-center space-y-space-md">' +
-      '<div class="relative inline-block"><img id="hatch-fairy-img" src="' + m.fairyImg + '" alt="' + m.fairyName + '" class="char-pop-in inline-block w-40 h-40 object-contain drop-shadow-lg" /></div>' +
+      '<div class="relative inline-block"><img id="hatch-fairy-img" src="' + m.fairyImg + '" alt="' + m.fairyName + '" class="' + imgClass + '" /></div>' +
       '<h2 class="font-headline-md text-headline-md text-primary">✨ 專屬綻放！' + m.fairyName + ' ✨</h2>' +
       '<div class="bg-surface-container-low rounded-lg p-space-md text-left space-y-space-xs">' +
       '<p class="font-label-md text-label-md text-primary">心靈天賦：【' + m.skillName + '】</p>' +
@@ -401,7 +403,36 @@
       '</div>'
     );
     var hatchPitch = hashPitch(m.fairyName);
-    makeCharacterInteractive(document.getElementById('hatch-fairy-img'), hatchPitch);
+    var hatchImg = document.getElementById('hatch-fairy-img');
+    if (m.hatchFrames) {
+      // 播放蛻變分解動畫（去背後的影片截幀），先預先載入所有格數再播放，避免邊播邊等圖造成播放變慢
+      var hf = m.hatchFrames;
+      var urls = [];
+      for (var fi = 1; fi <= hf.count; fi++) urls.push(hf.dir + '/f_' + String(fi).padStart(3, '0') + '.png');
+      Promise.all(urls.map(function (url) {
+        return new Promise(function (resolve) {
+          var im = new Image();
+          im.onload = im.onerror = resolve;
+          im.src = url;
+        });
+      })).then(function () {
+        var frame = 1;
+        hatchImg.src = urls[0];
+        var animTimer = setInterval(function () {
+          frame++;
+          if (frame > hf.count) {
+            clearInterval(animTimer);
+            hatchImg.src = m.fairyImg;
+            hatchImg.classList.add('char-pop-in');
+            makeCharacterInteractive(hatchImg, hatchPitch);
+            return;
+          }
+          hatchImg.src = urls[frame - 1];
+        }, 1000 / hf.fps);
+      });
+    } else {
+      makeCharacterInteractive(hatchImg, hatchPitch);
+    }
     typewriterVoice(document.getElementById('hatch-fairy-desc'), '很高興認識你，以後就是好夥伴了！', hatchPitch);
   }
 
