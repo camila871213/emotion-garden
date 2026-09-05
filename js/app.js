@@ -5,23 +5,23 @@
   // ---------- 資料設定 ----------
   var MOODS = {
     sunny:  { label: '快樂日光', sub: '明亮溫暖',   icon: 'wb_sunny',      fill: true,  swatch: 'bg-secondary-fixed text-secondary',
-              fairyName: '向日葵仙子', fairyImg: 'assets/fairies/sunny.png',
+              fairyName: '向日葵仙子', fairyImg: 'assets/fairies/sunny.png', fairyMeadowImg: 'assets/fairies/sunny-jump.png',
               skillName: '分享光芒', skillDesc: '能在社交情境中提升團隊氛圍，化解同儕間的尷尬與冷場。',
               fairyDesc: '圓潤發光的幾何小精靈身軀，環繞向日葵花瓣光環，象徵溫暖晴朗與無拘無束的活力。' },
     storm:  { label: '生氣雷雨', sub: '熱烈爆發',   icon: 'thunderstorm',  fill: false, swatch: 'bg-error-container text-error',
-              fairyName: '仙人掌仙子', fairyImg: 'assets/fairies/storm.png',
+              fairyName: '仙人掌仙子', fairyImg: 'assets/fairies/storm.png', fairyMeadowImg: 'assets/fairies/storm-jump.png',
               skillName: '建立邊界', skillDesc: '面對不公或邊界侵犯時，能勇敢且平靜地表達底線。',
               fairyDesc: '圓滾堅毅的仙人掌球體精靈，頂端盛開一朵堅強玫瑰，帶有保護自我的溫和盾牌。' },
     rain:   { label: '憂鬱陰雨', sub: '想靜一靜',   icon: 'rainy',         fill: true,  swatch: 'bg-tertiary-fixed text-tertiary',
-              fairyName: '藍鈴花仙子', fairyImg: 'assets/fairies/rain.png',
+              fairyName: '藍鈴花仙子', fairyImg: 'assets/fairies/rain.png', fairyMeadowImg: 'assets/fairies/rain-jump.png',
               skillName: '同理陪伴', skillDesc: '安靜傾聽受傷與難過，在不急躁的陪伴中化解冰冷。',
               fairyDesc: '宛如清透水滴與倒掛藍鈴花蕾的水之精靈，晶瑩澄澈，溫柔接納所有失落與淚水。' },
     breeze: { label: '平靜微風', sub: '放鬆舒服',   icon: 'air',           fill: false, swatch: 'bg-primary-fixed text-primary',
-              fairyName: '四葉草仙子', fairyImg: 'assets/fairies/breeze.png',
+              fairyName: '四葉草仙子', fairyImg: 'assets/fairies/breeze.png', fairyMeadowImg: 'assets/fairies/breeze-jump.png',
               skillName: '深呼吸防護', skillDesc: '面對環境感官過載時，創造安定呼吸的心靈淨化場域。',
               fairyDesc: '舒展平穩的四葉草精靈，自然發散微風氣息，提醒我們在喧鬧環境中安頓心靈節奏。' },
     fog:    { label: '害怕迷霧', sub: '有些不知所措', icon: 'foggy',       fill: false, swatch: 'bg-surface-container-high text-outline',
-              fairyName: '含羞草仙子', fairyImg: 'assets/fairies/fog.png',
+              fairyName: '含羞草仙子', fairyImg: 'assets/fairies/fog.png', fairyMeadowImg: 'assets/fairies/fog-jump.png',
               skillName: '危機警報', skillDesc: '引導覺察環境風險，在超出自身承受時果斷求助。',
               fairyDesc: '柔軟微縮的淡紫含羞草精靈，羽葉輕環自身，是靈敏警覺的自然安全雷達。' }
   };
@@ -201,7 +201,7 @@
     var list = [];
     state.unlockedFairies.forEach(function (key) {
       var m = MOODS[key];
-      list.push({ img: m.fairyImg, name: m.fairyName, desc: m.fairyDesc, canFly: true, pitch: hashPitch(m.fairyName) });
+      list.push({ img: m.fairyMeadowImg || m.fairyImg, name: m.fairyName, desc: m.fairyDesc, canFly: true, pitch: hashPitch(m.fairyName) });
     });
     FRUITS.forEach(function (f) {
       list.push({ img: f.img, name: f.name, desc: f.desc, canFly: false, pitch: hashPitch(f.id) });
