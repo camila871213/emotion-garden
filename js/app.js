@@ -5,23 +5,23 @@
   // ---------- 資料設定 ----------
   var MOODS = {
     sunny:  { label: '快樂日光', sub: '明亮溫暖',   icon: 'wb_sunny',      fill: true,  swatch: 'bg-secondary-fixed text-secondary',
-              fairyName: '向日葵仙子', fairyEmoji: '🌻', fairyIcon: 'sunny',
+              fairyName: '向日葵仙子', fairyImg: 'assets/fairies/sunny.png',
               skillName: '分享光芒', skillDesc: '能在社交情境中提升團隊氛圍，化解同儕間的尷尬與冷場。',
               fairyDesc: '圓潤發光的幾何小精靈身軀，環繞向日葵花瓣光環，象徵溫暖晴朗與無拘無束的活力。' },
     storm:  { label: '生氣雷雨', sub: '熱烈爆發',   icon: 'thunderstorm',  fill: false, swatch: 'bg-error-container text-error',
-              fairyName: '仙人掌仙子', fairyEmoji: '🌵', fairyIcon: 'park',
+              fairyName: '仙人掌仙子', fairyImg: 'assets/fairies/storm.png',
               skillName: '建立邊界', skillDesc: '面對不公或邊界侵犯時，能勇敢且平靜地表達底線。',
               fairyDesc: '圓滾堅毅的仙人掌球體精靈，頂端盛開一朵堅強玫瑰，帶有保護自我的溫和盾牌。' },
     rain:   { label: '憂鬱陰雨', sub: '想靜一靜',   icon: 'rainy',         fill: true,  swatch: 'bg-tertiary-fixed text-tertiary',
-              fairyName: '藍鈴花仙子', fairyEmoji: '🪻', fairyIcon: 'water_drop',
+              fairyName: '藍鈴花仙子', fairyImg: 'assets/fairies/rain.png',
               skillName: '同理陪伴', skillDesc: '安靜傾聽受傷與難過，在不急躁的陪伴中化解冰冷。',
               fairyDesc: '宛如清透水滴與倒掛藍鈴花蕾的水之精靈，晶瑩澄澈，溫柔接納所有失落與淚水。' },
     breeze: { label: '平靜微風', sub: '放鬆舒服',   icon: 'air',           fill: false, swatch: 'bg-primary-fixed text-primary',
-              fairyName: '四葉草仙子', fairyEmoji: '🍀', fairyIcon: 'energy_savings_leaf',
+              fairyName: '四葉草仙子', fairyImg: 'assets/fairies/breeze.png',
               skillName: '深呼吸防護', skillDesc: '面對環境感官過載時，創造安定呼吸的心靈淨化場域。',
               fairyDesc: '舒展平穩的四葉草精靈，自然發散微風氣息，提醒我們在喧鬧環境中安頓心靈節奏。' },
     fog:    { label: '害怕迷霧', sub: '有些不知所措', icon: 'foggy',       fill: false, swatch: 'bg-surface-container-high text-outline',
-              fairyName: '含羞草仙子', fairyEmoji: '💜', fairyIcon: 'spa',
+              fairyName: '含羞草仙子', fairyImg: 'assets/fairies/fog.png',
               skillName: '危機警報', skillDesc: '引導覺察環境風險，在超出自身承受時果斷求助。',
               fairyDesc: '柔軟微縮的淡紫含羞草精靈，羽葉輕環自身，是靈敏警覺的自然安全雷達。' }
   };
@@ -233,7 +233,7 @@
     renderGarden();
     showModal(
       '<div class="text-center space-y-space-md">' +
-      '<span class="fairy-float inline-block" style="font-size:72px;">' + m.fairyEmoji + '</span>' +
+      '<img src="' + m.fairyImg + '" alt="' + m.fairyName + '" class="fairy-float inline-block w-40 h-40 object-contain rounded-full shadow-lg" />' +
       '<h2 class="font-headline-md text-headline-md text-primary">✨ 專屬綻放！' + m.fairyName + ' ✨</h2>' +
       '<div class="bg-surface-container-low rounded-lg p-space-md text-left space-y-space-xs">' +
       '<p class="font-label-md text-label-md text-primary">心靈天賦：【' + m.skillName + '】</p>' +
@@ -377,7 +377,7 @@
           : '<div class="flex items-center gap-space-xxs text-secondary font-label-sm text-label-sm font-bold"><span class="material-symbols-outlined text-[18px]">timelapse</span><span>培育中 ' + progressPct + '%</span></div>') +
         '</div>' +
         '<div class="relative w-full h-40 rounded-xl overflow-hidden mb-space-md bg-surface-container flex items-center justify-center shadow-inner">' +
-        '<span class="fairy-float" style="font-size:72px; ' + (unlocked ? '' : 'filter:grayscale(1);opacity:.55;') + '">' + m.fairyEmoji + '</span>' +
+        '<img src="' + m.fairyImg + '" alt="' + m.fairyName + '" class="fairy-float w-28 h-28 object-contain" style="' + (unlocked ? '' : 'filter:grayscale(1);opacity:.55;') + '" />' +
         '</div>' +
         '<h3 class="font-headline-sm text-headline-sm text-on-surface mb-space-xs">' + m.fairyName + '</h3>' +
         '<p class="font-body-sm text-body-sm text-on-surface-variant mb-space-md leading-relaxed">' + m.fairyDesc + '</p>' +
@@ -491,7 +491,7 @@
   // ============ 智慧圖書館 ============
   var libInitialized = false;
   var FRUITS = [
-    { id: 'durian', emotion: '生氣', short: '生氣 · 榴槤寶', icon: 'park', role: '界線守護者', roleIcon: 'shield',
+    { id: 'durian', img: 'assets/fruits/durian.png', emotion: '生氣', short: '生氣 · 榴槤寶', icon: 'park', role: '界線守護者', roleIcon: 'shield',
       name: '刺刺蓮寶 · 榴槤守護精靈', slogan: '「生氣不是壞脾氣，而是保護柔軟內心的尖刺外殼！」',
       desc: '外殼長滿尖刺，像在警告外界『不要靠近我』。這層充滿防備的硬刺，其實是為了守護內部極度柔軟的果肉——當底線被侵犯時，為了保護脆弱自尊而豎起防衛小鎧甲。',
       need: '「尊重、公平與界線」', needDesc: '我不是故意要大發雷霆，我只是希望自己的原則被認真看待，渴望被尊重、被平等溫柔地對待。',
@@ -503,7 +503,7 @@
         { t: '暫停給予冷靜空間：', s: '「我現在心裡的火球很大，我需要先去平靜角落做 3 次深呼吸，等我平靜後再談。」', n: '適合場景：感覺自己快要忍不住想吼叫或摔東西時。' },
         { t: '尋求公平合作：', s: '「我希望能一起找到公平的解決辦法，而不是互相指責大聲吼叫。」', n: '適合場景：玩遊戲規則起爭執，或分工合作意見不合時。' }
       ] },
-    { id: 'coconut', emotion: '冷漠', short: '冷漠 · 椰子寶', icon: 'security', role: '心靈防空洞', roleIcon: 'security',
+    { id: 'coconut', img: 'assets/fruits/coconut.png', emotion: '冷漠', short: '冷漠 · 椰子寶', icon: 'security', role: '心靈防空洞', roleIcon: 'security',
       name: '靜靜椰寶 · 椰子守護精靈', slogan: '「厚殼不是拒絕愛，是給心靈一個安靜修復的防空洞！」',
       desc: '外表包裹著厚重堅硬的殼，敲打時難以得到回應。看似與外界徹底隔絕、毫不在乎，但只要有耐心剖開硬殼，裡面其實藏著純淨豐富的水分，代表著為了自我保護而需要的安全空間。',
       need: '「空間、安全感與自我保護」', needDesc: '外面的聲音與刺激太多了，我需要暫時退回堅硬的外殼裡，給自己一段不被打擾的寧靜時光來平復心情。',
@@ -515,7 +515,7 @@
         { t: '給出預計回歸時間：', s: '「請給我半小時沉澱一下，等我平靜放鬆後再來找你。」', n: '適合場景：大人或同學急著找你討論，而你心裡還很混亂時。' },
         { t: '真誠說明並非針對：', s: '「我不是不在乎你，我只是現在需要整理自己的情緒。」', n: '適合場景：朋友誤以為你在生他的氣、不理他時。' }
       ] },
-    { id: 'strawberry', emotion: '害怕', short: '害怕 · 草莓寶', icon: 'spa', role: '敏感小天線', roleIcon: 'spa',
+    { id: 'strawberry', img: 'assets/fruits/strawberry.png', emotion: '害怕', short: '害怕 · 草莓寶', icon: 'spa', role: '敏感小天線', roleIcon: 'spa',
       name: '莓莓怯寶 · 草莓守護精靈', slogan: '「承認害怕是勇敢的第一步，柔軟的心值得被溫柔抱抱！」',
       desc: '沒有任何堅硬的外皮保護，果肉直接外露且極度脆弱，稍微遇到碰撞或擠壓就會受傷。象徵著失去掌控感與預測能力時，那種亟需柔軟環境與安全感包覆的狀態。',
       need: '「安全感、可預測性與保護」', needDesc: '我面對陌生和未知時會心跳好快，我需要確定的安全環境、熟悉的陪伴，以及溫柔的鼓勵支持。',
@@ -527,7 +527,7 @@
         { t: '請求實體陪伴支援：', s: '「你可以牽著我的手，或是陪我一起走過去嗎？」', n: '適合場景：走進昏暗房間、去看牙醫或面對不熟悉的人事物時。' },
         { t: '請求具體清晰的步驟：', s: '「請告訴我接下來會發生什麼事，這樣我就能準備好了。」', n: '適合場景：行程臨時變動或不知道接下來該做什麼時。' }
       ] },
-    { id: 'passionfruit', emotion: '焦慮', short: '焦慮 · 百香果寶', icon: 'cyclone', role: '未來預警機', roleIcon: 'cyclone',
+    { id: 'passionfruit', img: 'assets/fruits/passionfruit.png', emotion: '焦慮', short: '焦慮 · 百香果寶', icon: 'cyclone', role: '未來預警機', roleIcon: 'cyclone',
       name: '果果思寶 · 百香果守護精靈', slogan: '「思緒像百香果籽一樣多，一顆一顆理清就不慌了！」',
       desc: '外皮會隨著時間漸漸緊繃、皺縮，切開後裡面是密密麻麻、彼此糾結不清的籽與酸汁。就像面對未知與失控時，腦中紛亂無序、急需理出頭緒的思緒。',
       need: '「確定感、秩序與掌控感」', needDesc: '腦海裡有幾千個『萬一』在打轉，我需要把事情拆解成一小步一小步，重拾心裡的秩序感。',
@@ -539,7 +539,7 @@
         { t: '設定微小行動第一步：', s: '「我們可以一步一步慢慢來嗎？我們先只做第一件小事。」', n: '適合場景：感覺挑戰太大不知從何下手而發慌時。' },
         { t: '理性沙盤推演預案：', s: '「如果發生最壞的情況，我們有什麼應對辦法呢？」', n: '適合場景：一直反覆擔心特定意外狀況發生時。' }
       ] },
-    { id: 'watermelon', emotion: '快樂', short: '快樂 · 西瓜寶', icon: 'mood', role: '陽光分享大使', roleIcon: 'mood',
+    { id: 'watermelon', img: 'assets/fruits/watermelon.png', emotion: '快樂', short: '快樂 · 西瓜寶', icon: 'mood', role: '陽光分享大使', roleIcon: 'mood',
       name: '瓜瓜樂寶 · 西瓜守護精靈', slogan: '「飽滿的甜美，分享給夥伴會變成雙倍的陽光！」',
       desc: '體積飽滿、色彩鮮豔且富含水分，切開時散發出一種暢快、豐盛且適合分享的氛圍。代表著內心渴望的連結與成就感都被充分滿足時，那種開闊且有價值的身心狀態。',
       need: '「連結、成就感與自我實現」', needDesc: '我體驗到了前所未有的滿足與喜悅，非常渴望將這份豐盛的美好傳遞給身邊重視的人！',
@@ -551,7 +551,7 @@
         { t: '邀請好友共享喜悅：', s: '「這份好心情我想跟你們一起慶祝，我們一起去玩吧！」', n: '適合場景：有好消息想和好朋友或家人分享時。' },
         { t: '表達真摯的感謝：', s: '「謝謝你們陪我一起完成這項挑戰，有你們在太棒了！」', n: '適合場景：團隊獲勝、合作完成勞作或得到大家幫忙時。' }
       ] },
-    { id: 'lemon', emotion: '難過', short: '難過 · 檸檬寶', icon: 'water_drop', role: '心靈療癒泉', roleIcon: 'water_drop',
+    { id: 'lemon', img: 'assets/fruits/lemon.png', emotion: '難過', short: '難過 · 檸檬寶', icon: 'water_drop', role: '心靈療癒泉', roleIcon: 'water_drop',
       name: '檬檬酸寶 · 檸檬守護精靈', slogan: '「酸澀是一杯檸檬水，加點同理的溫水就能化為甘甜！」',
       desc: '充滿強烈的酸澀感，單獨品嚐時會讓人忍不住皺眉甚至泛淚。但只要願意加入一點溫水與糖分，就能化解刺骨的酸，轉化為滋潤身心的養分。',
       need: '「安慰、陪伴、同理與接納」', needDesc: '我現在心裡沉甸甸又酸酸的，不需要大道理，只需要你坐在我身邊，陪著我一起接納這份失落。',
@@ -563,7 +563,7 @@
         { t: '請求無聲的安靜陪伴：', s: '「請靜靜陪我坐一下，只要聽我說說話就好，不需要急著解決。」', n: '適合場景：心情極度低落，不想聽說教或大道理時。' },
         { t: '表達這件事對自己的重要性：', s: '「我受傷了，因為這件事對我來說真的很重要、很有意義。」', n: '適合場景：努力很久卻沒得到好成績、心血被忽視時。' }
       ] },
-    { id: 'greenapple', emotion: '嫉妒', short: '嫉妒 · 青蘋果寶', icon: 'nature', role: '潛力尋寶官', roleIcon: 'nature',
+    { id: 'greenapple', img: 'assets/fruits/greenapple.png', emotion: '嫉妒', short: '嫉妒 · 青蘋果寶', icon: 'nature', role: '潛力尋寶官', roleIcon: 'nature',
       name: '青青果寶 · 青蘋果守護精靈', slogan: '「青綠也有青綠的脆甜，每顆蘋果都有自己成熟的花期！」',
       desc: '外表帶著未成熟的青綠色，口感酸中帶澀。看著別人的鮮紅與甜美，內心產生了拉扯，背後其實是渴望確認自我價值，期盼自己也能被看見、被重視。',
       need: '「自我價值、安全感與被重視」', needDesc: '我也好想成為大家眼中的焦點，害怕自己被忽視或比下去，渴望確認自己的獨特光芒也是重要的。',
@@ -575,7 +575,7 @@
         { t: '肯定自我專屬亮點：', s: '「我雖然這方面還在練習，但我也擁有自己獨特的優點與專長！」', n: '適合場景：覺得自己似乎樣樣都不如別人的自我懷疑時刻。' },
         { t: '轉化為向他人學習的動力：', s: '「我願意向他的長處請教學習，同時也給自己的努力拍拍手！」', n: '適合場景：想打破嫉妒的彆扭，與優秀夥伴建立友好關係時。' }
       ] },
-    { id: 'grapefruit', emotion: '委屈', short: '委屈 · 葡萄柚寶', icon: 'balance', role: '真理公道伯', roleIcon: 'balance',
+    { id: 'grapefruit', img: 'assets/fruits/grapefruit.png', emotion: '委屈', short: '委屈 · 葡萄柚寶', icon: 'balance', role: '真理公道伯', roleIcon: 'balance',
       name: '柚柚甘寶 · 葡萄柚守護精靈', slogan: '「微苦是希望被懂的信號，說出真相才能讓甘甜浮現！」',
       desc: '外表看起來像是一般甜美多汁的柑橘，但一口咬下卻帶著難以言喻的微苦與澀味。就像明明抱持著善意與努力，卻沒有被公平對待或理解，渴望別人能看見全貌的苦悶。',
       need: '「被理解、公平與認同」', needDesc: '我的好意被曲解了、我的努力被忽略了，我需要一個公平的機會，把真實的過程完整說清楚。',
@@ -587,7 +587,7 @@
         { t: '澄清自己的真實初衷：', s: '「我真的不是故意那樣做的，請相信我最初的出發點是想幫忙。」', n: '適合場景：幫忙卻不小心幫倒忙，反而被責備時。' },
         { t: '溫和要求公平溝通機制：', s: '「我感覺自己受到了不公平的對待，希望能有平等的機會好好釐清。」', n: '適合場景：規則被隨意更改，或是雙方責任被偏頗認定時。' }
       ] },
-    { id: 'peach', emotion: '得意', short: '得意 · 水蜜桃寶', icon: 'stars', role: '自信發光星', roleIcon: 'stars',
+    { id: 'peach', img: 'assets/fruits/peach.png', emotion: '得意', short: '得意 · 水蜜桃寶', icon: 'stars', role: '自信發光星', roleIcon: 'stars',
       name: '桃桃甜寶 · 水蜜桃守護精靈', slogan: '「自信綻放像水蜜桃香氣，坦蕩接受掌聲也是一種健康的力量！」',
       desc: '色澤粉嫩耀眼、香氣四溢，高調且毫無保留地散發著甜美的氣息。象徵著能力與成就被看見時，那種充滿自信、期待獲得眾人讚賞與掌聲的飽滿模樣。',
       need: '「肯定、讚賞與能力展現」', needDesc: '我付出了很多汗水才完成這項成果，我想大方地享受榮耀，並期待聽到大家的肯定與掌聲！',
@@ -606,7 +606,7 @@
     if (!f) return;
     document.getElementById('lib-current-tag').textContent = '目前探索：' + f.short;
     document.getElementById('lib-role-text').textContent = f.role;
-    document.getElementById('lib-spirit-icon').textContent = f.icon;
+    document.getElementById('lib-spirit-icon').outerHTML = '<img id="lib-spirit-icon" src="' + f.img + '" alt="' + f.name + '" class="w-full h-full object-cover rounded-2xl shadow-md" />';
     document.getElementById('lib-spirit-name').textContent = f.name;
     document.getElementById('lib-slogan').textContent = f.slogan;
     document.getElementById('lib-description').textContent = f.desc;
@@ -646,7 +646,7 @@
     tabs.innerHTML = FRUITS.map(function (f, i) {
       return '<button type="button" data-id="' + f.id + '" class="lib-tab-btn flex flex-col items-center p-space-xs rounded-xl transition-all duration-200 text-center ' +
         (i === 0 ? 'bg-primary text-on-primary shadow-md' : 'bg-surface-container-low text-on-surface') + '">' +
-        '<span class="material-symbols-outlined text-[26px]">' + f.icon + '</span>' +
+        '<img src="' + f.img + '" alt="" class="w-9 h-9 rounded-full object-cover shadow-sm" />' +
         '<span class="font-label-sm text-label-sm font-bold leading-tight mt-space-xxs">' + f.short.split(' · ')[1] + '</span>' +
         '<span class="text-[12px] opacity-80">' + f.emotion + '</span>' +
         '</button>';
