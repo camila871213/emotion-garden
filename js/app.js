@@ -190,6 +190,80 @@
     document.getElementById('garden-stage-label').textContent = '第 ' + state.growthStage + ' 階 · ' + info.label;
     document.getElementById('garden-status-desc').textContent = info.desc;
     renderMoodPebbles();
+    if (!meadowInitialized) { meadowInitialized = true; initMeadow(); }
+  }
+
+  // ---------- 花園居民：草地上會自己走動／飛翔的仙子與精靈 ----------
+  var meadowInitialized = false;
+  var meadowTimers = [];
+
+  function meadowResidents() {
+    var list = [];
+    state.unlockedFairies.forEach(function (key) {
+      var m = MOODS[key];
+      list.push({ img: m.fairyImg, name: m.fairyName, desc: m.fairyDesc, canFly: true, pitch: hashPitch(m.fairyName) });
+    });
+    FRUITS.forEach(function (f) {
+      list.push({ img: f.img, name: f.name, desc: f.desc, canFly: false, pitch: hashPitch(f.id) });
+    });
+    return list;
+  }
+
+  function showResidentModal(resident) {
+    showModal(
+      '<div class="text-center space-y-space-md">' +
+      '<div class="relative inline-block"><img id="meadow-modal-img" src="' + resident.img + '" alt="' + resident.name + '" class="char-pop-in inline-block w-40 h-40 object-contain rounded-full shadow-lg" /></div>' +
+      '<h2 class="font-headline-md text-headline-md text-primary">' + resident.name + '</h2>' +
+      '<p class="font-body-md text-body-md text-on-surface-variant" id="meadow-modal-desc"></p>' +
+      '<button class="w-full h-14 rounded-full bg-primary text-on-primary font-label-md text-label-md" onclick="closeModal()">👋 掰掰，等等再來找你</button>' +
+      '</div>'
+    );
+    makeCharacterInteractive(document.getElementById('meadow-modal-img'), resident.pitch);
+    typewriterVoice(document.getElementById('meadow-modal-desc'), resident.desc, resident.pitch);
+  }
+
+  function startMeadowWander(el, resident, stageEl) {
+    function tick() {
+      var w = stageEl.clientWidth, h = stageEl.clientHeight;
+      var spriteSize = 56;
+      var groundTop = h * 0.55;
+      var targetX = Math.random() * Math.max(1, w - spriteSize);
+      var targetY = resident.canFly
+        ? Math.random() * Math.max(1, h - spriteSize)
+        : groundTop + Math.random() * Math.max(1, h - groundTop - spriteSize);
+      var curX = parseFloat(el.style.left) || 0;
+      var curY = parseFloat(el.style.top) || 0;
+      el.style.transform = (targetX < curX) ? 'scaleX(-1)' : 'scaleX(1)';
+      var dist = Math.abs(targetX - curX) + Math.abs(targetY - curY);
+      var duration = Math.max(1.4, dist / 35);
+      el.style.transition = 'left ' + duration + 's linear, top ' + duration + 's linear';
+      el.style.left = targetX + 'px';
+      el.style.top = targetY + 'px';
+      var idleTime = 900 + Math.random() * 2600;
+      var t = setTimeout(tick, duration * 1000 + idleTime);
+      meadowTimers.push(t);
+    }
+    tick();
+  }
+
+  function initMeadow() {
+    meadowTimers.forEach(clearTimeout);
+    meadowTimers = [];
+    var stage = document.getElementById('meadow-stage');
+    var layer = document.getElementById('meadow-sprites-layer');
+    layer.innerHTML = '';
+    var w = stage.clientWidth, h = stage.clientHeight;
+    meadowResidents().forEach(function (resident) {
+      var img = document.createElement('img');
+      img.src = resident.img;
+      img.alt = resident.name;
+      img.className = 'meadow-sprite';
+      img.style.left = (Math.random() * Math.max(1, w - 56)) + 'px';
+      img.style.top = (resident.canFly ? Math.random() * Math.max(1, h * 0.5) : h * 0.6 + Math.random() * (h * 0.3)) + 'px';
+      img.addEventListener('click', function (e) { e.stopPropagation(); showResidentModal(resident); });
+      layer.appendChild(img);
+      startMeadowWander(img, resident, stage);
+    });
   }
 
   function playWaterFx() {
@@ -244,6 +318,7 @@
     state.growthStage = 0;
     state.moodHistory = [];
     saveState();
+    meadowInitialized = false; // 有新仙子加入花園居民，重新整理草地
     renderGarden();
     playSuccess();
     showModal(
@@ -396,7 +471,7 @@
           : '<div class="flex items-center gap-space-xxs text-secondary font-label-sm text-label-sm font-bold"><span class="material-symbols-outlined text-[18px]">timelapse</span><span>培育中 ' + progressPct + '%</span></div>') +
         '</div>' +
         '<div class="relative w-full h-40 rounded-xl overflow-hidden mb-space-md bg-surface-container flex items-center justify-center shadow-inner">' +
-        '<img data-fairy="' + key + '" src="' + m.fairyImg + '" alt="' + m.fairyName + '" class="w-28 h-28 object-contain" style="' + (unlocked ? '' : 'filter:grayscale(1);opacity:.55;') + '" />' +
+        '<img src="' + m.fairyImg + '" alt="' + m.fairyName + '" class="w-28 h-28 object-contain" style="' + (unlocked ? '' : 'filter:grayscale(1);opacity:.55;') + '" />' +
         '</div>' +
         '<h3 class="font-headline-sm text-headline-sm text-on-surface mb-space-xs">' + m.fairyName + '</h3>' +
         '<p class="font-body-sm text-body-sm text-on-surface-variant mb-space-md leading-relaxed">' + m.fairyDesc + '</p>' +
@@ -416,10 +491,6 @@
         location.hash = el.dataset.target;
         switchView(el.dataset.target);
       });
-    });
-    grid.querySelectorAll('img[data-fairy]').forEach(function (img) {
-      var m = MOODS[img.dataset.fairy];
-      makeCharacterInteractive(img, hashPitch(m.fairyName));
     });
 
     var timeline = document.getElementById('growth-stage-timeline');
@@ -806,12 +877,10 @@
     if (!f) return;
     document.getElementById('lib-current-tag').textContent = '目前探索：' + f.short;
     document.getElementById('lib-role-text').textContent = f.role;
-    document.getElementById('lib-spirit-icon').outerHTML = '<img id="lib-spirit-icon" src="' + f.img + '" alt="' + f.name + '" class="char-pop-in w-full h-full object-cover rounded-2xl shadow-md" />';
+    document.getElementById('lib-spirit-icon').outerHTML = '<img id="lib-spirit-icon" src="' + f.img + '" alt="' + f.name + '" class="w-full h-full object-cover rounded-2xl shadow-md" />';
     document.getElementById('lib-spirit-name').textContent = f.name;
+    document.getElementById('lib-slogan').textContent = f.slogan;
     document.getElementById('lib-description').textContent = f.desc;
-    var fruitPitch = hashPitch(f.id);
-    makeCharacterInteractive(document.getElementById('lib-spirit-icon'), fruitPitch);
-    typewriterVoice(document.getElementById('lib-slogan'), f.slogan, fruitPitch);
     document.getElementById('lib-brain-title').textContent = f.brainTitle;
     document.getElementById('lib-brain-desc').textContent = f.brainDesc;
     document.getElementById('lib-need-title').textContent = f.need;
@@ -1129,6 +1198,7 @@
     activeProfileId = id;
     state = loadState(id);
     setActiveProfileId(id);
+    meadowInitialized = false; // 換了使用者，花園居民要換成這位小朋友自己解鎖的仙子
     document.getElementById('profile-gate').hidden = true;
     document.getElementById('app-shell').hidden = false;
     var p = loadProfiles().filter(function (x) { return x.id === id; })[0];

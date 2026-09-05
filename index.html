@@ -206,6 +206,22 @@ tailwind.config={darkMode:"class",theme:{extend:{
           </a>
         </section>
       </div>
+
+      <!-- 花園居民：住在草地上的仙子與精靈，會自己走動／飛翔，點一下可以互動 -->
+      <section class="w-full bg-surface-container-lowest rounded-xl p-space-md lg:p-space-lg shadow-sm space-y-space-sm">
+        <div class="flex items-center justify-between flex-wrap gap-space-xs">
+          <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-space-xs">
+            <span class="material-symbols-outlined text-[22px]">forest</span> 花園居民
+          </h2>
+          <span class="font-label-sm text-label-sm text-on-surface-variant">點一下和他們打招呼</span>
+        </div>
+        <div id="meadow-stage" class="relative w-full h-[300px] sm:h-[380px] rounded-xl overflow-hidden shadow-inner" style="background: linear-gradient(to bottom, #d7f0ee 0%, #d7f0ee 52%, #bfe3ad 52%, #8fc97a 100%);">
+          <div class="absolute rounded-full bg-white/70" style="width:70px;height:24px; left:8%; top:10%;"></div>
+          <div class="absolute rounded-full bg-white/70" style="width:50px;height:18px; left:68%; top:8%;"></div>
+          <div class="absolute rounded-full bg-white/55" style="width:40px;height:16px; left:42%; top:16%;"></div>
+          <div id="meadow-sprites-layer" class="absolute inset-0"></div>
+        </div>
+      </section>
     </div>
   </section>
 
