@@ -20,6 +20,25 @@ tailwind.config={darkMode:"class",theme:{extend:{
 </head>
 <body class="bg-surface font-body-md text-on-surface select-none">
 
+<!-- ============ 選擇使用者（平板共用情境：切換不同小朋友的存檔） ============ -->
+<div id="profile-gate" class="fixed inset-0 z-[300] bg-surface flex flex-col items-center justify-center p-space-lg overflow-y-auto">
+  <div class="w-full max-w-2xl space-y-space-lg text-center py-space-xl">
+    <div class="space-y-space-xs">
+      <div class="text-[56px] leading-none">🌱</div>
+      <h1 class="font-headline-lg text-headline-lg text-primary">今天是誰要來照顧花園呢？</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant">點選你的名字，或是新增一位新朋友</p>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-space-md" id="profile-list"></div>
+    <div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm space-y-space-md" id="profile-new-form">
+      <p class="font-label-md text-label-md text-primary">✨ 新增小朋友</p>
+      <input type="text" id="profile-name-input" maxlength="12" placeholder="輸入你的名字" class="w-full h-14 px-space-md rounded-lg bg-surface-container-low text-center font-body-lg text-body-lg text-on-surface outline-none focus:ring-2 focus:ring-primary" />
+      <div class="flex flex-wrap items-center justify-center gap-space-xs" id="profile-avatar-picker"></div>
+      <button type="button" id="profile-create-btn" class="w-full h-14 rounded-full bg-primary text-on-primary font-label-lg text-label-lg shadow-md active:translate-y-0.5 transition-all">開始種花仙子！</button>
+    </div>
+  </div>
+</div>
+
+<div id="app-shell" hidden>
 <!-- ============ 共用頁首 ============ -->
 <header class="fixed top-0 w-full z-50 bg-surface/90 backdrop-blur-xl shadow-[0_4px_20px_rgba(74,107,93,0.06)]">
   <div class="h-20 max-w-7xl mx-auto px-gutter-mobile lg:px-gutter-desktop flex items-center justify-between gap-space-sm">
@@ -47,6 +66,10 @@ tailwind.config={darkMode:"class",theme:{extend:{
       <a class="nav-link px-space-md py-space-xs rounded-full font-label-md text-label-md transition-all duration-200" data-view="jungle" href="#jungle">叢林冒險</a>
     </nav>
     <div class="flex items-center gap-space-xs">
+      <button type="button" id="profile-switch-btn" class="flex items-center gap-1.5 pl-1.5 pr-space-sm h-10 rounded-full bg-surface-container-low hover:bg-surface-container-high transition-colors" title="切換使用者">
+        <span class="w-7 h-7 rounded-full bg-primary-fixed flex items-center justify-center text-[16px]" id="profile-switch-avatar">🌱</span>
+        <span class="font-label-sm text-label-sm text-on-surface" id="profile-switch-name">訪客</span>
+      </button>
       <button aria-label="靜心音樂開關" id="ambient-toggle-btn" class="flex items-center justify-center w-10 h-10 rounded-full bg-surface-container-low text-primary hover:bg-surface-container-high hover:text-on-surface transition-colors" type="button">
         <span class="material-symbols-outlined text-[20px]" id="ambient-toggle-icon">volume_off</span>
       </button>
@@ -451,6 +474,8 @@ tailwind.config={darkMode:"class",theme:{extend:{
     <p class="font-body-sm text-body-sm text-on-surface-variant">溫柔灌溉，靜待開花 · 兒童情緒學習呵護角落</p>
   </div>
 </footer>
+</div>
+<!-- /app-shell -->
 
 <!-- 共用彈出視窗 -->
 <div id="app-modal-overlay" class="fixed inset-0 bg-inverse-surface/40 backdrop-blur-sm z-[100] hidden items-center justify-center p-space-md">

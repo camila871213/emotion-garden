@@ -37,16 +37,29 @@
     { icon: 'auto_awesome',   label: '蛻變開花', desc: '專屬花仙子誕生了！' }
   ];
 
-  // ---------- 狀態管理 ----------
-  var STORAGE_KEY = 'eg_state_v1';
+  // ---------- 使用者檔案（平板共用情境：多位小朋友各自的存檔） ----------
+  var PROFILES_KEY = 'eg_profiles_v1';
+  var ACTIVE_PROFILE_KEY = 'eg_active_profile_v1';
+  var AVATAR_CHOICES = ['🌻', '🌵', '🪻', '🍀', '💜'];
+
+  function loadProfiles() {
+    try { return JSON.parse(localStorage.getItem(PROFILES_KEY)) || []; } catch (e) { return []; }
+  }
+  function saveProfiles(list) { localStorage.setItem(PROFILES_KEY, JSON.stringify(list)); }
+  function getActiveProfileId() { return localStorage.getItem(ACTIVE_PROFILE_KEY); }
+  function setActiveProfileId(id) { localStorage.setItem(ACTIVE_PROFILE_KEY, id); }
+  function stateKeyFor(profileId) { return 'eg_state_v1__' + profileId; }
+
+  // ---------- 狀態管理（每位使用者各自一份） ----------
+  var activeProfileId = null;
 
   function todayStr() {
     var d = new Date();
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   }
 
-  function loadState() {
-    var raw = localStorage.getItem(STORAGE_KEY);
+  function loadState(profileId) {
+    var raw = localStorage.getItem(stateKeyFor(profileId));
     var defaults = {
       waterInventory: 0,
       growthStage: 0,
@@ -66,10 +79,10 @@
     }
   }
 
-  var state = loadState();
+  var state = null;
 
   function saveState() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    localStorage.setItem(stateKeyFor(activeProfileId), JSON.stringify(state));
   }
 
   function dominantMood() {
@@ -989,12 +1002,94 @@
     renderJungleStep();
   }
 
+  // ---------- 使用者選擇畫面 ----------
+  var bootstrapped = false;
+
+  function renderProfileList() {
+    var profiles = loadProfiles();
+    var list = document.getElementById('profile-list');
+    list.innerHTML = profiles.map(function (p) {
+      return '<button type="button" data-id="' + p.id + '" class="profile-card flex flex-col items-center gap-space-xs p-space-md rounded-xl bg-surface-container-lowest hover:bg-surface-container-low shadow-sm active:scale-95 transition-all">' +
+        '<span class="w-16 h-16 rounded-full bg-primary-fixed flex items-center justify-center text-[32px]">' + p.avatar + '</span>' +
+        '<span class="font-label-md text-label-md text-on-surface">' + escapeHtml(p.name) + '</span>' +
+        '</button>';
+    }).join('');
+    list.querySelectorAll('.profile-card').forEach(function (btn) {
+      btn.addEventListener('click', function () { chooseProfile(btn.dataset.id); });
+    });
+  }
+
+  function renderAvatarPicker() {
+    var wrap = document.getElementById('profile-avatar-picker');
+    wrap.dataset.selected = AVATAR_CHOICES[0];
+    wrap.innerHTML = AVATAR_CHOICES.map(function (a, i) {
+      return '<button type="button" data-avatar="' + a + '" class="avatar-choice w-12 h-12 rounded-full flex items-center justify-center text-[24px] transition-all ' +
+        (i === 0 ? 'bg-primary-fixed ring-2 ring-primary' : 'bg-surface-container-low') + '">' + a + '</button>';
+    }).join('');
+    wrap.querySelectorAll('.avatar-choice').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        wrap.dataset.selected = btn.dataset.avatar;
+        wrap.querySelectorAll('.avatar-choice').forEach(function (b) { b.classList.remove('bg-primary-fixed', 'ring-2', 'ring-primary'); b.classList.add('bg-surface-container-low'); });
+        btn.classList.remove('bg-surface-container-low'); btn.classList.add('bg-primary-fixed', 'ring-2', 'ring-primary');
+      });
+    });
+  }
+
+  function enterApp(id) {
+    activeProfileId = id;
+    state = loadState(id);
+    setActiveProfileId(id);
+    document.getElementById('profile-gate').hidden = true;
+    document.getElementById('app-shell').hidden = false;
+    var p = loadProfiles().filter(function (x) { return x.id === id; })[0];
+    if (p) {
+      document.getElementById('profile-switch-name').textContent = p.name;
+      document.getElementById('profile-switch-avatar').textContent = p.avatar;
+    }
+    if (!bootstrapped) {
+      bootstrapped = true;
+      initNav();
+    } else {
+      currentView = null; // 強制重新渲染目前畫面，換上新使用者的資料
+      switchView(location.hash.replace('#', '') || 'garden');
+    }
+    refreshDewBadges();
+  }
+
+  function chooseProfile(id) { enterApp(id); }
+
+  document.getElementById('profile-create-btn').addEventListener('click', function () {
+    var nameInput = document.getElementById('profile-name-input');
+    var name = nameInput.value.trim();
+    if (!name) { nameInput.focus(); return; }
+    var avatar = document.getElementById('profile-avatar-picker').dataset.selected || AVATAR_CHOICES[0];
+    var profiles = loadProfiles();
+    var id = 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+    profiles.push({ id: id, name: name, avatar: avatar, createdAt: todayStr() });
+    saveProfiles(profiles);
+    nameInput.value = '';
+    chooseProfile(id);
+  });
+
+  document.getElementById('profile-switch-btn').addEventListener('click', function () {
+    document.getElementById('app-shell').hidden = true;
+    document.getElementById('profile-gate').hidden = false;
+    renderProfileList();
+  });
+
   // ---------- 啟動 ----------
   window.__switchView = switchView;
   window.addEventListener('hashchange', function () {
     var key = location.hash.replace('#', '') || 'garden';
     switchView(key);
   });
-  initNav();
-  refreshDewBadges();
+
+  renderAvatarPicker();
+  var initialActiveId = getActiveProfileId();
+  var initialProfiles = loadProfiles();
+  if (initialActiveId && initialProfiles.some(function (p) { return p.id === initialActiveId; })) {
+    enterApp(initialActiveId);
+  } else {
+    renderProfileList();
+  }
 })();
