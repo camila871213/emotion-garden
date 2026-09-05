@@ -658,25 +658,47 @@
   }
 
   // ============ 叢林冒險（滿版沉浸式，文字僅作輔助，降低認知負荷） ============
+  // 三大單元：處己(自我覺察) → 處人(人際互動) → 處環境(環境適應)，各自對應不同的互動設計
   var jungleInitialized = false;
   var jungleStep = 'entrance'; // 'entrance' | 0..N-1 | 'done'
   var jungleAnswered = false;
 
+  var UNITS = {
+    self: { name: '處己', sub: '覺察自己的身體訊號', icon: '🧠', tint: 'bg-primary/30', prompt: '他現在的身體感覺是？' },
+    social: { name: '處人', sub: '選出最好的回應', icon: '🤝', tint: 'bg-secondary/30', prompt: '你會怎麼回應？' },
+    env: { name: '處環境', sub: '找到平靜的策略', icon: '🌿', tint: 'bg-tertiary/30', prompt: '這時候可以怎麼做？' }
+  };
+
   var SCENARIOS = [
-    { emoji: '🛝', tint: 'bg-primary/30', scene: '鞦韆一直被佔用，你有點著急。',
+    { unit: 'self', emoji: '📄', scene: '考卷發回來了，分數比想的低。',
       options: [
-        { emoji: '🤝', label: '一起輪流玩', correct: true, feedback: '很棒！說出來，大家都能玩到 🌟' },
-        { emoji: '😤', label: '生氣搶過來', correct: false, feedback: '搶奪會讓事情更糟喔，再想想？' }
+        { emoji: '💓', label: '心跳變快', correct: true, feedback: '沒錯！這是緊張的身體訊號 💛' },
+        { emoji: '🥱', label: '想打哈欠', correct: false, feedback: '再想想，這種時候身體通常會…' }
       ] },
-    { emoji: '🎨', tint: 'bg-tertiary/30', scene: '心愛的畫被弄濕了，好難過。',
+    { unit: 'self', emoji: '📓', scene: '忘記帶作業了，快上課了。',
       options: [
-        { emoji: '🌬️', label: '深呼吸，沒關係', correct: true, feedback: '你接住了自己的情緒，好棒！💛' },
-        { emoji: '😭', label: '把畫揉爛丟掉', correct: false, feedback: '先別急著放棄，也許還能補救。' }
+        { emoji: '😟', label: '肚子緊緊的', correct: true, feedback: '對，緊張時肚子常會緊緊的！' },
+        { emoji: '🕺', label: '想跳舞', correct: false, feedback: '再想想，這時候的身體感覺是…' }
       ] },
-    { emoji: '🎪', tint: 'bg-secondary/30', scene: '園遊會好吵好擠，頭有點暈。',
+    { unit: 'social', emoji: '🛝', scene: '同學一直霸占鞦韆不讓你玩。',
+      options: [
+        { emoji: '🙂', label: '我們輪流玩好嗎？', correct: true, feedback: '很棒！說出來，大家都能玩到 🌟' },
+        { emoji: '😤', label: '你很自私耶！', correct: false, feedback: '這樣說可能會吵起來，再想想？' }
+      ] },
+    { unit: 'social', emoji: '📋', scene: '分組報告，同學都不幫忙。',
+      options: [
+        { emoji: '🙂', label: '你需要幫忙嗎？', correct: true, feedback: '關心對方，事情更容易一起解決！' },
+        { emoji: '😠', label: '隨便你，爛透了', correct: false, feedback: '這樣說會傷感情，再想想？' }
+      ] },
+    { unit: 'env', emoji: '🎪', scene: '園遊會好吵好擠，頭有點暈。',
       options: [
         { emoji: '🧘', label: '找安靜角落深呼吸', correct: true, feedback: '你照顧了自己，超棒的決定！✨' },
         { emoji: '📢', label: '摀耳朵大叫', correct: false, feedback: '大叫會更累喔，試試安靜角落？' }
+      ] },
+    { unit: 'env', emoji: '🌧️', scene: '校外教學突然下大雨，行程亂了。',
+      options: [
+        { emoji: '🌬️', label: '深呼吸，調整心情', correct: true, feedback: '計畫變動也沒關係，你做得很好！' },
+        { emoji: '😡', label: '生氣一直抱怨', correct: false, feedback: '抱怨改變不了天氣，試試深呼吸？' }
       ] }
   ];
 
@@ -695,6 +717,20 @@
     tint.className = 'absolute inset-0 ' + (cls || '');
   }
 
+  var jungleUnitIntroShownFor = null;
+
+  function renderUnitIntro(unitKey, onContinue) {
+    var u = UNITS[unitKey];
+    setJungleTint(u.tint);
+    document.getElementById('jungle-content').innerHTML =
+      '<div class="text-[64px] leading-none drop-shadow-lg">' + u.icon + '</div>' +
+      '<h1 class="font-headline-lg text-headline-lg text-white drop-shadow-lg">' + u.name + '</h1>' +
+      '<p class="font-body-md text-body-md text-white/90 drop-shadow">' + u.sub + '</p>' +
+      '<button type="button" id="jungle-unit-continue-btn" class="mt-space-sm px-space-xl h-16 rounded-full bg-primary text-on-primary font-label-lg text-label-lg shadow-2xl active:translate-y-1 transition-all flex items-center gap-space-xs">' +
+      '<span>進入關卡</span><span class="material-symbols-outlined text-[22px]">arrow_forward</span></button>';
+    document.getElementById('jungle-unit-continue-btn').addEventListener('click', onContinue);
+  }
+
   function renderJungleEntrance() {
     setJungleTint('bg-black/20');
     document.getElementById('jungle-content').innerHTML =
@@ -711,9 +747,12 @@
 
   function renderJungleScenario(idx) {
     var sc = SCENARIOS[idx];
-    setJungleTint(sc.tint);
-    var html = '<div class="text-[64px] leading-none drop-shadow-lg">' + sc.emoji + '</div>' +
+    var u = UNITS[sc.unit];
+    setJungleTint(u.tint);
+    var html = '<div class="inline-flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-white/25 backdrop-blur-sm text-white font-label-sm text-label-sm mb-space-xs">' + u.icon + ' ' + u.name + '</div>' +
+      '<div class="text-[64px] leading-none drop-shadow-lg">' + sc.emoji + '</div>' +
       '<p class="font-headline-sm text-headline-sm text-white drop-shadow-lg max-w-md">' + sc.scene + '</p>' +
+      '<p class="font-label-md text-label-md text-white/90 drop-shadow -mt-space-sm">' + u.prompt + '</p>' +
       '<div class="flex flex-col sm:flex-row gap-space-sm w-full max-w-md" id="jungle-options">' +
       sc.options.map(function (o, oi) {
         return '<button type="button" data-oi="' + oi + '" class="jungle-opt flex-1 flex flex-col items-center gap-1 px-space-md py-space-md rounded-xl bg-white/90 hover:bg-white shadow-xl active:scale-95 transition-all">' +
@@ -769,14 +808,24 @@
 
   function renderJungleStep() {
     renderJungleDots();
-    if (jungleStep === 'entrance') renderJungleEntrance();
-    else if (jungleStep === 'done') renderJungleDone();
-    else renderJungleScenario(jungleStep);
+    if (jungleStep === 'entrance') { renderJungleEntrance(); return; }
+    if (jungleStep === 'done') { renderJungleDone(); return; }
+    var sc = SCENARIOS[jungleStep];
+    var isFirstOfUnit = jungleStep === 0 || SCENARIOS[jungleStep - 1].unit !== sc.unit;
+    if (isFirstOfUnit && jungleUnitIntroShownFor !== sc.unit) {
+      renderUnitIntro(sc.unit, function () {
+        jungleUnitIntroShownFor = sc.unit;
+        renderJungleScenario(jungleStep);
+      });
+    } else {
+      renderJungleScenario(jungleStep);
+    }
   }
 
   function initJungle() {
     jungleInitialized = true;
     jungleStep = 'entrance';
+    jungleUnitIntroShownFor = null;
     renderJungleStep();
   }
 
