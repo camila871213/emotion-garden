@@ -197,14 +197,19 @@
   var meadowInitialized = false;
   var meadowTimers = [];
 
+  var MEADOW_SPRITE_SIZE = 88;
+  var MEADOW_MIN_GAP = 70; // 居民彼此之間盡量保持的最小距離
+
   function meadowResidents() {
     var list = [];
     state.unlockedFairies.forEach(function (key) {
       var m = MOODS[key];
-      list.push({ img: m.fairyMeadowImg || m.fairyImg, name: m.fairyName, desc: m.fairyDesc, canFly: true, pitch: hashPitch(m.fairyName) });
+      // 有跳躍圖的話，走動時會跟站姿圖交替顯示，製造出蹦跳的動感
+      list.push({ img: m.fairyMeadowImg || m.fairyImg, standImg: m.fairyImg, name: m.fairyName, desc: m.fairyDesc, canFly: true, pitch: hashPitch(m.fairyName) });
     });
     FRUITS.forEach(function (f) {
-      list.push({ img: f.img, name: f.name, desc: f.desc, canFly: false, pitch: hashPitch(f.id) });
+      // 水果精靈目前只有一張圖，沒有第二個姿勢可以交替
+      list.push({ img: f.img, standImg: null, name: f.name, desc: f.desc, canFly: false, pitch: hashPitch(f.id) });
     });
     return list;
   }
@@ -212,38 +217,99 @@
   function showResidentModal(resident) {
     showModal(
       '<div class="text-center space-y-space-md">' +
-      '<div class="relative inline-block"><img id="meadow-modal-img" src="' + resident.img + '" alt="' + resident.name + '" class="char-pop-in inline-block w-40 h-40 object-contain rounded-full shadow-lg" /></div>' +
+      '<div class="relative inline-block"><img id="meadow-modal-img" src="' + resident.img + '" alt="' + resident.name + '" class="char-pop-in inline-block w-40 h-40 object-contain drop-shadow-lg" /></div>' +
       '<h2 class="font-headline-md text-headline-md text-primary">' + resident.name + '</h2>' +
       '<p class="font-body-md text-body-md text-on-surface-variant" id="meadow-modal-desc"></p>' +
       '<button class="w-full h-14 rounded-full bg-primary text-on-primary font-label-md text-label-md" onclick="closeModal()">👋 掰掰，等等再來找你</button>' +
       '</div>'
     );
     makeCharacterInteractive(document.getElementById('meadow-modal-img'), resident.pitch);
-    typewriterVoice(document.getElementById('meadow-modal-desc'), resident.desc, resident.pitch);
+    var greeting = RESIDENT_GREETINGS[Math.floor(Math.random() * RESIDENT_GREETINGS.length)];
+    typewriterVoice(document.getElementById('meadow-modal-desc'), greeting, resident.pitch);
   }
 
-  function startMeadowWander(el, resident, stageEl) {
+  // 找一個離其他居民有一定距離的隨機位置，避免大家擠成一團
+  function pickSpacedSpot(w, h, minX, maxY, otherEls, selfEl) {
+    var best = null, bestScore = -1;
+    for (var attempt = 0; attempt < 6; attempt++) {
+      var x = Math.random() * Math.max(1, w - MEADOW_SPRITE_SIZE);
+      var y = minX + Math.random() * Math.max(1, maxY - minX);
+      var minDist = Infinity;
+      Array.from(otherEls).forEach(function (other) {
+        if (other === selfEl) return;
+        var ox = parseFloat(other.style.left) || 0, oy = parseFloat(other.style.top) || 0;
+        var d = Math.hypot(x - ox, y - oy);
+        if (d < minDist) minDist = d;
+      });
+      if (minDist >= MEADOW_MIN_GAP) return { x: x, y: y };
+      if (minDist > bestScore) { bestScore = minDist; best = { x: x, y: y }; }
+    }
+    return best || { x: Math.random() * w, y: minX };
+  }
+
+  function startMeadowWander(el, resident, stageEl, layerEl) {
+    var hopTimer = null;
+    function setHopping(on) {
+      if (hopTimer) { clearInterval(hopTimer); hopTimer = null; }
+      if (!on || !resident.standImg) { el.src = resident.img; return; }
+      var showingJump = true;
+      hopTimer = setInterval(function () {
+        showingJump = !showingJump;
+        el.src = showingJump ? resident.img : resident.standImg;
+      }, 260);
+      meadowTimers.push(hopTimer);
+    }
     function tick() {
       var w = stageEl.clientWidth, h = stageEl.clientHeight;
-      var spriteSize = 56;
       var groundTop = h * 0.55;
-      var targetX = Math.random() * Math.max(1, w - spriteSize);
-      var targetY = resident.canFly
-        ? Math.random() * Math.max(1, h - spriteSize)
-        : groundTop + Math.random() * Math.max(1, h - groundTop - spriteSize);
+      var spot = resident.canFly
+        ? pickSpacedSpot(w, h, 0, h - MEADOW_SPRITE_SIZE, layerEl.children, el)
+        : pickSpacedSpot(w, h, groundTop, h - MEADOW_SPRITE_SIZE, layerEl.children, el);
       var curX = parseFloat(el.style.left) || 0;
       var curY = parseFloat(el.style.top) || 0;
-      el.style.transform = (targetX < curX) ? 'scaleX(-1)' : 'scaleX(1)';
-      var dist = Math.abs(targetX - curX) + Math.abs(targetY - curY);
+      el.style.transform = (spot.x < curX) ? 'scaleX(-1)' : 'scaleX(1)';
+      var dist = Math.abs(spot.x - curX) + Math.abs(spot.y - curY);
       var duration = Math.max(1.4, dist / 35);
       el.style.transition = 'left ' + duration + 's linear, top ' + duration + 's linear';
-      el.style.left = targetX + 'px';
-      el.style.top = targetY + 'px';
+      el.style.left = spot.x + 'px';
+      el.style.top = spot.y + 'px';
+      setHopping(true);
       var idleTime = 900 + Math.random() * 2600;
-      var t = setTimeout(tick, duration * 1000 + idleTime);
+      var t = setTimeout(function () {
+        setHopping(false);
+        var t2 = setTimeout(tick, idleTime);
+        meadowTimers.push(t2);
+      }, duration * 1000);
       meadowTimers.push(t);
     }
     tick();
+  }
+
+  // 定期檢查居民彼此有沒有貼太近／重疊，太近的話就輕輕推開，像撞到會彈開一樣
+  function startMeadowCollisionLoop(layerEl) {
+    var t = setInterval(function () {
+      var sprites = Array.from(layerEl.children);
+      for (var i = 0; i < sprites.length; i++) {
+        for (var j = i + 1; j < sprites.length; j++) {
+          var a = sprites[i], b = sprites[j];
+          var ax = parseFloat(a.style.left) || 0, ay = parseFloat(a.style.top) || 0;
+          var bx = parseFloat(b.style.left) || 0, by = parseFloat(b.style.top) || 0;
+          var dx = bx - ax, dy = by - ay;
+          var dist = Math.hypot(dx, dy);
+          if (dist > 0.1 && dist < MEADOW_SPRITE_SIZE * 0.75) {
+            var push = (MEADOW_SPRITE_SIZE * 0.75 - dist) / 2;
+            var ux = dx / dist, uy = dy / dist;
+            a.style.transition = 'left 0.35s ease-out, top 0.35s ease-out';
+            b.style.transition = 'left 0.35s ease-out, top 0.35s ease-out';
+            a.style.left = (ax - ux * push) + 'px';
+            a.style.top = (ay - uy * push) + 'px';
+            b.style.left = (bx + ux * push) + 'px';
+            b.style.top = (by + uy * push) + 'px';
+          }
+        }
+      }
+    }, 500);
+    meadowTimers.push(t);
   }
 
   function initMeadow() {
@@ -258,12 +324,13 @@
       img.src = resident.img;
       img.alt = resident.name;
       img.className = 'meadow-sprite';
-      img.style.left = (Math.random() * Math.max(1, w - 56)) + 'px';
+      img.style.left = (Math.random() * Math.max(1, w - MEADOW_SPRITE_SIZE)) + 'px';
       img.style.top = (resident.canFly ? Math.random() * Math.max(1, h * 0.5) : h * 0.6 + Math.random() * (h * 0.3)) + 'px';
       img.addEventListener('click', function (e) { e.stopPropagation(); showResidentModal(resident); });
       layer.appendChild(img);
-      startMeadowWander(img, resident, stage);
+      startMeadowWander(img, resident, stage, layer);
     });
+    startMeadowCollisionLoop(layer);
   }
 
   function playWaterFx() {
@@ -323,7 +390,7 @@
     playSuccess();
     showModal(
       '<div class="text-center space-y-space-md">' +
-      '<div class="relative inline-block"><img id="hatch-fairy-img" src="' + m.fairyImg + '" alt="' + m.fairyName + '" class="char-pop-in inline-block w-40 h-40 object-contain rounded-full shadow-lg" /></div>' +
+      '<div class="relative inline-block"><img id="hatch-fairy-img" src="' + m.fairyImg + '" alt="' + m.fairyName + '" class="char-pop-in inline-block w-40 h-40 object-contain drop-shadow-lg" /></div>' +
       '<h2 class="font-headline-md text-headline-md text-primary">✨ 專屬綻放！' + m.fairyName + ' ✨</h2>' +
       '<div class="bg-surface-container-low rounded-lg p-space-md text-left space-y-space-xs">' +
       '<p class="font-label-md text-label-md text-primary">心靈天賦：【' + m.skillName + '】</p>' +
@@ -335,7 +402,7 @@
     );
     var hatchPitch = hashPitch(m.fairyName);
     makeCharacterInteractive(document.getElementById('hatch-fairy-img'), hatchPitch);
-    typewriterVoice(document.getElementById('hatch-fairy-desc'), m.fairyDesc, hatchPitch);
+    typewriterVoice(document.getElementById('hatch-fairy-desc'), '很高興認識你，以後就是好夥伴了！', hatchPitch);
   }
 
   // ============ 情緒澆灌日記 ============
@@ -677,6 +744,7 @@
   }
 
   var REACTION_LINES = ['嗨嗨！', '一起加油！', '咻咻咻～', '今天也要開心喔！', '抱抱～', '嘿嘿嘿', '呼呼～', '要不要一起玩？'];
+  var RESIDENT_GREETINGS = ['嗨，很高興見到你！', '今天心情還好嗎？', '要不要一起深呼吸？', '你今天也很棒喔！', '謝謝你來看我～', '一起加油吧！', '你是我的好朋友！', '記得也要照顧自己喔！'];
 
   function spawnSparkles(container) {
     for (var i = 0; i < 6; i++) {
@@ -877,7 +945,7 @@
     if (!f) return;
     document.getElementById('lib-current-tag').textContent = '目前探索：' + f.short;
     document.getElementById('lib-role-text').textContent = f.role;
-    document.getElementById('lib-spirit-icon').outerHTML = '<img id="lib-spirit-icon" src="' + f.img + '" alt="' + f.name + '" class="w-full h-full object-cover rounded-2xl shadow-md" />';
+    document.getElementById('lib-spirit-icon').outerHTML = '<img id="lib-spirit-icon" src="' + f.img + '" alt="' + f.name + '" class="w-full h-full object-contain drop-shadow-md" />';
     document.getElementById('lib-spirit-name').textContent = f.name;
     document.getElementById('lib-slogan').textContent = f.slogan;
     document.getElementById('lib-description').textContent = f.desc;
