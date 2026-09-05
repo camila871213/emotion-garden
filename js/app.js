@@ -770,6 +770,12 @@
 
   var SCENARIOS = [
     { unit: 'self', emoji: '📄', scene: '考卷發回來了，分數比想的低。',
+      // panels：示範用「翻頁看四格漫畫」的佔位版面，之後可換成 Stitch 畫的真實分鏡圖
+      panels: [
+        { emoji: '🏫', caption: '下課鐘聲響了，老師開始發考卷。' },
+        { emoji: '📄', caption: '拿到考卷，分數比想的低很多。' },
+        { emoji: '💓', caption: '心跳突然變快，手心也濕濕的。' }
+      ],
       options: [
         { emoji: '💓', label: '心跳變快', correct: true, feedback: '沒錯！這是緊張的身體訊號 💛' },
         { emoji: '🥱', label: '想打哈欠', correct: false, feedback: '再想想，這種時候身體通常會…' }
@@ -844,6 +850,33 @@
     });
   }
 
+  var junglePanelIndex = 0;
+
+  // 佔位版「四格漫畫」翻頁閱讀器：之後把 caption 的 emoji 佔位框換成 Stitch 畫的分鏡圖即可
+  function renderJunglePanels(idx) {
+    var sc = SCENARIOS[idx];
+    var u = UNITS[sc.unit];
+    var panel = sc.panels[junglePanelIndex];
+    var isLast = junglePanelIndex === sc.panels.length - 1;
+    setJungleTint(u.tint);
+    document.getElementById('jungle-content').innerHTML =
+      '<div class="inline-flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-white/25 backdrop-blur-sm text-white font-label-sm text-label-sm mb-space-xs">' + u.icon + ' ' + u.name + '</div>' +
+      '<button type="button" id="jungle-panel-frame" class="relative w-full max-w-sm aspect-square rounded-2xl border-4 border-white/80 bg-black/25 backdrop-blur-sm shadow-2xl flex flex-col items-center justify-center gap-space-sm p-space-lg active:scale-[0.98] transition-all">' +
+      '<span class="absolute top-3 left-3 px-space-sm py-0.5 rounded-full bg-white/90 text-on-surface font-label-sm text-label-sm font-bold">' + (junglePanelIndex + 1) + ' / ' + sc.panels.length + '</span>' +
+      '<span class="text-[72px] leading-none drop-shadow-lg">' + panel.emoji + '</span>' +
+      '<p class="font-headline-sm text-headline-sm text-white drop-shadow-lg text-center">' + panel.caption + '</p>' +
+      '<span class="absolute bottom-3 right-3 flex items-center gap-1 text-white/90 font-label-sm text-label-sm">' + (isLast ? '開始回答' : '點一下繼續') + ' <span class="material-symbols-outlined text-[18px]">arrow_forward</span></span>' +
+      '</button>';
+    document.getElementById('jungle-panel-frame').addEventListener('click', function () {
+      if (isLast) {
+        renderJungleScenario(idx);
+      } else {
+        junglePanelIndex += 1;
+        renderJunglePanels(idx);
+      }
+    });
+  }
+
   function renderJungleScenario(idx) {
     var sc = SCENARIOS[idx];
     var u = UNITS[sc.unit];
@@ -887,7 +920,7 @@
         var retryBtn = document.getElementById('jungle-retry-btn');
         if (retryBtn) retryBtn.addEventListener('click', function () {
           jungleAnswered = false;
-          renderJungleStep();
+          renderJungleScenario(idx); // 重試只重來選擇題，不重播漫畫
         });
       });
     });
@@ -906,6 +939,15 @@
     });
   }
 
+  function enterScenario(idx) {
+    junglePanelIndex = 0;
+    if (SCENARIOS[idx].panels && SCENARIOS[idx].panels.length) {
+      renderJunglePanels(idx);
+    } else {
+      renderJungleScenario(idx);
+    }
+  }
+
   function renderJungleStep() {
     renderJungleDots();
     if (jungleStep === 'entrance') { renderJungleEntrance(); return; }
@@ -915,10 +957,10 @@
     if (isFirstOfUnit && jungleUnitIntroShownFor !== sc.unit) {
       renderUnitIntro(sc.unit, function () {
         jungleUnitIntroShownFor = sc.unit;
-        renderJungleScenario(jungleStep);
+        enterScenario(jungleStep);
       });
     } else {
-      renderJungleScenario(jungleStep);
+      enterScenario(jungleStep);
     }
   }
 
