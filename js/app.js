@@ -248,16 +248,19 @@
     playSuccess();
     showModal(
       '<div class="text-center space-y-space-md">' +
-      '<img src="' + m.fairyImg + '" alt="' + m.fairyName + '" class="fairy-float inline-block w-40 h-40 object-contain rounded-full shadow-lg" />' +
+      '<div class="relative inline-block"><img id="hatch-fairy-img" src="' + m.fairyImg + '" alt="' + m.fairyName + '" class="char-pop-in inline-block w-40 h-40 object-contain rounded-full shadow-lg" /></div>' +
       '<h2 class="font-headline-md text-headline-md text-primary">✨ 專屬綻放！' + m.fairyName + ' ✨</h2>' +
       '<div class="bg-surface-container-low rounded-lg p-space-md text-left space-y-space-xs">' +
       '<p class="font-label-md text-label-md text-primary">心靈天賦：【' + m.skillName + '】</p>' +
       '<p class="font-body-sm text-body-sm text-on-surface-variant">' + m.skillDesc + '</p>' +
       '</div>' +
-      '<p class="font-body-sm text-body-sm text-on-surface-variant">' + m.fairyDesc + '</p>' +
+      '<p class="font-body-sm text-body-sm text-on-surface-variant" id="hatch-fairy-desc"></p>' +
       '<button class="w-full h-14 rounded-full bg-primary text-on-primary font-label-md text-label-md" onclick="closeModal()">🤝 開始守護</button>' +
       '</div>'
     );
+    var hatchPitch = hashPitch(m.fairyName);
+    makeCharacterInteractive(document.getElementById('hatch-fairy-img'), hatchPitch);
+    typewriterVoice(document.getElementById('hatch-fairy-desc'), m.fairyDesc, hatchPitch);
   }
 
   // ============ 情緒澆灌日記 ============
@@ -393,7 +396,7 @@
           : '<div class="flex items-center gap-space-xxs text-secondary font-label-sm text-label-sm font-bold"><span class="material-symbols-outlined text-[18px]">timelapse</span><span>培育中 ' + progressPct + '%</span></div>') +
         '</div>' +
         '<div class="relative w-full h-40 rounded-xl overflow-hidden mb-space-md bg-surface-container flex items-center justify-center shadow-inner">' +
-        '<img src="' + m.fairyImg + '" alt="' + m.fairyName + '" class="fairy-float w-28 h-28 object-contain" style="' + (unlocked ? '' : 'filter:grayscale(1);opacity:.55;') + '" />' +
+        '<img data-fairy="' + key + '" src="' + m.fairyImg + '" alt="' + m.fairyName + '" class="w-28 h-28 object-contain" style="' + (unlocked ? '' : 'filter:grayscale(1);opacity:.55;') + '" />' +
         '</div>' +
         '<h3 class="font-headline-sm text-headline-sm text-on-surface mb-space-xs">' + m.fairyName + '</h3>' +
         '<p class="font-body-sm text-body-sm text-on-surface-variant mb-space-md leading-relaxed">' + m.fairyDesc + '</p>' +
@@ -413,6 +416,10 @@
         location.hash = el.dataset.target;
         switchView(el.dataset.target);
       });
+    });
+    grid.querySelectorAll('img[data-fairy]').forEach(function (img) {
+      var m = MOODS[img.dataset.fairy];
+      makeCharacterInteractive(img, hashPitch(m.fairyName));
     });
 
     var timeline = document.getElementById('growth-stage-timeline');
@@ -559,6 +566,87 @@
     gain.gain.setValueAtTime(0.08, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
     osc.start(now); osc.stop(now + 0.25);
+  }
+
+  // ---------- 角色語助聲＋打字機效果（動物森友會風格：邊打字邊發出可愛短音） ----------
+  function charBlip(basePitch) {
+    if (!soundEnabled) return;
+    var ctx = ensureAudio();
+    var now = ctx.currentTime;
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'triangle';
+    var pitch = basePitch * (0.94 + Math.random() * 0.12);
+    osc.frequency.setValueAtTime(pitch, now);
+    osc.frequency.exponentialRampToValueAtTime(pitch * 0.85, now + 0.06);
+    gain.gain.setValueAtTime(0.06, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+    osc.start(now); osc.stop(now + 0.07);
+  }
+
+  function hashPitch(str) {
+    var h = 0;
+    for (var i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) % 10000;
+    return 340 + (h % 220); // 340~560Hz 之間，讓每個角色聲音略有不同
+  }
+
+  // 打字機逐字顯示＋每隔幾個字發出語助音，el 為容器、text 為要顯示的文字
+  function typewriterVoice(el, text, basePitch) {
+    if (!el) return;
+    if (el._typewriterTimer) clearInterval(el._typewriterTimer); // 避免連續切換時，舊的打字機還在跑造成文字疊字
+    el.textContent = '';
+    var i = 0;
+    el._typewriterTimer = setInterval(function () {
+      if (i >= text.length) { clearInterval(el._typewriterTimer); el._typewriterTimer = null; return; }
+      el.textContent += text[i];
+      if (i % 2 === 0 && text[i] !== '，' && text[i] !== '。' && text[i] !== ' ') charBlip(basePitch);
+      i++;
+    }, 45);
+  }
+
+  var REACTION_LINES = ['嗨嗨！', '一起加油！', '咻咻咻～', '今天也要開心喔！', '抱抱～', '嘿嘿嘿', '呼呼～', '要不要一起玩？'];
+
+  function spawnSparkles(container) {
+    for (var i = 0; i < 6; i++) {
+      var s = document.createElement('span');
+      s.className = 'char-sparkle';
+      s.textContent = '✨';
+      s.style.left = '50%';
+      s.style.top = '50%';
+      s.style.fontSize = (10 + Math.random() * 10) + 'px';
+      var angle = Math.random() * Math.PI * 2;
+      var dist = 30 + Math.random() * 30;
+      s.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
+      s.style.setProperty('--dy', Math.sin(angle) * dist + 'px');
+      container.appendChild(s);
+      (function (el) { setTimeout(function () { el.remove(); }, 720); })(s);
+    }
+  }
+
+  // 幫任何角色圖片（.char-portrait）加上「點一下就有反應」：Q 彈跳動＋語助音＋隨機可愛台詞泡泡
+  function makeCharacterInteractive(imgEl, voicePitch) {
+    if (!imgEl || imgEl.dataset.charBound) return;
+    imgEl.dataset.charBound = '1';
+    imgEl.classList.add('char-portrait');
+    var wrapper = imgEl.parentElement;
+    if (wrapper && getComputedStyle(wrapper).position === 'static') wrapper.style.position = 'relative';
+    imgEl.addEventListener('click', function (e) {
+      e.stopPropagation();
+      imgEl.classList.remove('char-tap-fx');
+      void imgEl.offsetWidth; // 強制 reflow 讓動畫可以重新觸發
+      imgEl.classList.add('char-tap-fx');
+      charBlip(voicePitch || 440);
+      setTimeout(function () { charBlip((voicePitch || 440) * 1.15); }, 90);
+      if (wrapper) {
+        spawnSparkles(wrapper);
+        var bubble = document.createElement('div');
+        bubble.className = 'char-speech-bubble';
+        bubble.textContent = REACTION_LINES[Math.floor(Math.random() * REACTION_LINES.length)];
+        wrapper.appendChild(bubble);
+        setTimeout(function () { bubble.remove(); }, 1400);
+      }
+    });
   }
 
   // 觸控回饋：任何按鈕點擊都給一個小小的漣漪 + 音效
@@ -718,10 +806,12 @@
     if (!f) return;
     document.getElementById('lib-current-tag').textContent = '目前探索：' + f.short;
     document.getElementById('lib-role-text').textContent = f.role;
-    document.getElementById('lib-spirit-icon').outerHTML = '<img id="lib-spirit-icon" src="' + f.img + '" alt="' + f.name + '" class="w-full h-full object-cover rounded-2xl shadow-md" />';
+    document.getElementById('lib-spirit-icon').outerHTML = '<img id="lib-spirit-icon" src="' + f.img + '" alt="' + f.name + '" class="char-pop-in w-full h-full object-cover rounded-2xl shadow-md" />';
     document.getElementById('lib-spirit-name').textContent = f.name;
-    document.getElementById('lib-slogan').textContent = f.slogan;
     document.getElementById('lib-description').textContent = f.desc;
+    var fruitPitch = hashPitch(f.id);
+    makeCharacterInteractive(document.getElementById('lib-spirit-icon'), fruitPitch);
+    typewriterVoice(document.getElementById('lib-slogan'), f.slogan, fruitPitch);
     document.getElementById('lib-brain-title').textContent = f.brainTitle;
     document.getElementById('lib-brain-desc').textContent = f.brainDesc;
     document.getElementById('lib-need-title').textContent = f.need;
