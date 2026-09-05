@@ -256,7 +256,7 @@
       hopTimer = setInterval(function () {
         showingJump = !showingJump;
         el.src = showingJump ? resident.img : resident.standImg;
-      }, 260);
+      }, 750);
       meadowTimers.push(hopTimer);
     }
     function tick() {
