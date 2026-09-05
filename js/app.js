@@ -205,6 +205,7 @@
     state.growthStage += 1;
     if (state.currentMood) state.moodHistory.push(state.currentMood);
     playWaterFx();
+    playWater();
 
     if (state.growthStage >= 6) {
       setTimeout(function () { triggerHatch(); }, 500);
@@ -231,6 +232,7 @@
     state.moodHistory = [];
     saveState();
     renderGarden();
+    playSuccess();
     showModal(
       '<div class="text-center space-y-space-md">' +
       '<img src="' + m.fairyImg + '" alt="' + m.fairyName + '" class="fairy-float inline-block w-40 h-40 object-contain rounded-full shadow-lg" />' +
@@ -346,6 +348,7 @@
     saveState();
     renderDiary();
     refreshDewBadges();
+    playSuccess();
     showModal(
       '<div class="text-center space-y-space-sm">' +
       '<span class="material-symbols-outlined text-tertiary" style="font-size:48px;">celebration</span>' +
@@ -430,6 +433,18 @@
     var phase = 'inhale';
     ring.classList.add('inhale');
     text.textContent = '慢慢吸氣……';
+    if (soundEnabled) {
+      var ctx = ensureAudio();
+      breathOsc = ctx.createOscillator();
+      breathGain = ctx.createGain();
+      breathOsc.type = 'sine';
+      breathOsc.frequency.setValueAtTime(196, ctx.currentTime);
+      breathGain.gain.setValueAtTime(0, ctx.currentTime);
+      breathGain.gain.linearRampToValueAtTime(0.05, ctx.currentTime + 1);
+      breathOsc.connect(breathGain);
+      breathGain.connect(ctx.destination);
+      breathOsc.start();
+    }
     breathInterval = setInterval(function () {
       if (phase === 'inhale') {
         ring.classList.remove('inhale'); ring.classList.add('exhale');
@@ -447,6 +462,14 @@
 
   function stopBreathing() {
     if (breathInterval) { clearInterval(breathInterval); breathInterval = null; }
+    if (breathOsc) {
+      try {
+        var ctx = audioCtx;
+        breathGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.3);
+        (function (osc) { setTimeout(function () { try { osc.stop(); } catch (e) {} }, 350); })(breathOsc);
+      } catch (e) {}
+      breathOsc = null;
+    }
     var ring = document.getElementById('breath-ring');
     if (ring) { ring.classList.remove('inhale', 'exhale'); }
     var text = document.getElementById('breath-text');
@@ -460,28 +483,104 @@
   document.getElementById('breath-start-btn').addEventListener('click', startBreathing);
   document.getElementById('breath-stop-btn').addEventListener('click', stopBreathing);
 
-  // 環境音開關（右上角喇叭按鈕）
-  var ambientOn = false;
+  // ---------- 音效系統（也控制右上角「音效開關」，預設關閉，適合教室情境） ----------
+  var soundEnabled = false;
+
+  function playTap() {
+    if (!soundEnabled) return;
+    var ctx = ensureAudio();
+    var now = ctx.currentTime;
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(520, now);
+    osc.frequency.exponentialRampToValueAtTime(360, now + 0.08);
+    gain.gain.setValueAtTime(0.09, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+    osc.start(now); osc.stop(now + 0.1);
+  }
+
+  function playWater() {
+    if (!soundEnabled) return;
+    var ctx = ensureAudio();
+    var now = ctx.currentTime;
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(180, now);
+    osc.frequency.exponentialRampToValueAtTime(720, now + 0.18);
+    gain.gain.setValueAtTime(0.14, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+    osc.start(now); osc.stop(now + 0.22);
+  }
+
+  function playSuccess() {
+    if (!soundEnabled) return;
+    var ctx = ensureAudio();
+    var now = ctx.currentTime;
+    [523.25, 659.25, 783.99].forEach(function (freq, i) {
+      var t = now + i * 0.09;
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, t);
+      gain.gain.setValueAtTime(0.12, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+      osc.start(t); osc.stop(t + 0.35);
+    });
+  }
+
+  function playWrong() {
+    if (!soundEnabled) return;
+    var ctx = ensureAudio();
+    var now = ctx.currentTime;
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(220, now);
+    osc.frequency.exponentialRampToValueAtTime(160, now + 0.2);
+    gain.gain.setValueAtTime(0.08, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+    osc.start(now); osc.stop(now + 0.25);
+  }
+
+  // 觸控回饋：任何按鈕點擊都給一個小小的漣漪 + 音效
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('button, a.nav-link, a.nav-link-mobile, a[data-view="jump"]');
+    if (!btn) return;
+    playTap();
+    var rect = btn.getBoundingClientRect();
+    var ripple = document.createElement('span');
+    var size = Math.max(rect.width, rect.height) * 0.9;
+    ripple.className = 'tap-ripple';
+    ripple.style.width = ripple.style.height = size + 'px';
+    ripple.style.left = ((e.clientX - rect.left) - size / 2) + 'px';
+    ripple.style.top = ((e.clientY - rect.top) - size / 2) + 'px';
+    ripple.style.opacity = '0.25';
+    var cs = getComputedStyle(btn);
+    if (cs.position === 'static') btn.style.position = 'relative';
+    btn.style.overflow = btn.style.overflow || 'hidden';
+    btn.appendChild(ripple);
+    setTimeout(function () { ripple.remove(); }, 500);
+  }, true);
+
+  // 右上角「音效開關」：控制所有 UI 音效 + 靜心呼吸小島的環境音
   document.getElementById('ambient-toggle-btn').addEventListener('click', function () {
     var icon = document.getElementById('ambient-toggle-icon');
-    ambientOn = !ambientOn;
-    if (ambientOn) {
-      var ctx = ensureAudio();
-      breathOsc = ctx.createOscillator();
-      breathGain = ctx.createGain();
-      breathOsc.type = 'sine';
-      breathOsc.frequency.setValueAtTime(196, ctx.currentTime);
-      breathGain.gain.setValueAtTime(0, ctx.currentTime);
-      breathGain.gain.linearRampToValueAtTime(0.04, ctx.currentTime + 1);
-      breathOsc.connect(breathGain);
-      breathGain.connect(ctx.destination);
-      breathOsc.start();
+    soundEnabled = !soundEnabled;
+    if (soundEnabled) {
+      ensureAudio();
       icon.textContent = 'volume_up';
+      playTap();
     } else {
       if (breathOsc) {
         var ctx2 = audioCtx;
-        breathGain.gain.linearRampToValueAtTime(0, ctx2.currentTime + 0.5);
-        (function (osc) { setTimeout(function () { try { osc.stop(); } catch (e) {} }, 600); })(breathOsc);
+        breathGain.gain.linearRampToValueAtTime(0, ctx2.currentTime + 0.3);
+        (function (osc) { setTimeout(function () { try { osc.stop(); } catch (e) {} }, 350); })(breathOsc);
         breathOsc = null;
       }
       icon.textContent = 'volume_off';
@@ -770,6 +869,7 @@
         document.querySelectorAll('.jungle-opt').forEach(function (b) { b.classList.add('opacity-50'); });
         btn.classList.remove('opacity-50');
         btn.classList.add('ring-4', choice.correct ? 'ring-primary' : 'ring-secondary');
+        if (choice.correct) playSuccess(); else playWrong();
         var fb = document.getElementById('jungle-feedback');
         fb.innerHTML = '<div class="inline-flex items-center gap-space-xs px-space-md py-space-sm rounded-full bg-white/95 shadow-xl">' +
           '<span class="font-label-md text-label-md text-on-surface">' + choice.feedback + '</span></div>' +

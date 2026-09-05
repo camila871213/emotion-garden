@@ -45,3 +45,24 @@
 .fade-swap {
   transition: opacity 0.2s ease;
 }
+
+/* 全域按鈕觸控回饋：按下時輕微縮小＋變暗，放開時彈回 */
+button, a.nav-link, a.nav-link-mobile, .mood-pebble, .jungle-opt {
+  transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.12s ease, box-shadow 0.12s ease;
+}
+button:active:not(:disabled), a.nav-link:active, a.nav-link-mobile:active {
+  transform: scale(0.94);
+  filter: brightness(0.96);
+}
+
+@keyframes tapRipple {
+  0% { transform: scale(0); opacity: 0.45; }
+  100% { transform: scale(1); opacity: 0; }
+}
+.tap-ripple {
+  position: absolute;
+  border-radius: 999px;
+  background: currentColor;
+  pointer-events: none;
+  animation: tapRipple 0.5s ease-out forwards;
+}
