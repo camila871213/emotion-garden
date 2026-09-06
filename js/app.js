@@ -1145,6 +1145,40 @@
         { emoji: '😟', label: '肚子緊緊的', correct: true, feedback: '對，緊張時肚子常會緊緊的！' },
         { emoji: '🕺', label: '想跳舞', correct: false, feedback: '再想想，這時候的身體感覺是…' }
       ] },
+    { unit: 'self', emoji: '📝', scene: '上台報告忘詞了。',
+      // 老師提供的社會性故事內容
+      panels: [
+        { tag: 'trigger', caption: '上台報告時，我突然忘記接下來要說什麼。', emoji: '📝💦' },
+        { tag: 'view', tagLabel: '身體訊號', caption: '臉突然發燙、腦袋一片空白，這是緊張的感覺。', emoji: '😳' },
+        { tag: 'guide', caption: '我可以深呼吸，看小抄提示卡，慢慢想起來。', emoji: '🌬️' },
+        { tag: 'affirm', caption: '想起來後順利講完，我鬆了一口氣。', emoji: '🌻' }
+      ],
+      options: [
+        { emoji: '😳', label: '臉發燙、腦袋空白', correct: true, feedback: '對，緊張時常會這樣，深呼吸就會慢慢好轉！' },
+        { emoji: '😴', label: '想睡覺', correct: false, feedback: '再想想，這時候的身體感覺是…' }
+      ] },
+    { unit: 'self', emoji: '🎒', scene: '同學誤會東西是我拿的。',
+      panels: [
+        { tag: 'trigger', caption: '東西不見了，同學說是我拿的，但不是我。', emoji: '🎒❓' },
+        { tag: 'view', tagLabel: '身體訊號', caption: '心裡覺得委屈、想哭，這是被誤會的感覺。', emoji: '🥺' },
+        { tag: 'guide', caption: '深呼吸，平靜地說「不是我拿的」，請老師幫忙。', emoji: '✋' },
+        { tag: 'affirm', caption: '老師澄清後，誤會解開了。', emoji: '🤝' }
+      ],
+      options: [
+        { emoji: '🥺', label: '委屈、想哭', correct: true, feedback: '對，被誤會時常會這樣，說出來會好一點！' },
+        { emoji: '😆', label: '覺得很好笑', correct: false, feedback: '再想想，被誤會的時候身體感覺是…' }
+      ] },
+    { unit: 'self', emoji: '🧍', scene: '排隊買午餐等了好久。',
+      panels: [
+        { tag: 'trigger', caption: '排隊買午餐，隊伍好長，等了好久。', emoji: '🧍‍♂️🧍‍♀️🧍' },
+        { tag: 'view', tagLabel: '身體訊號', caption: '覺得不耐煩、想插隊，這是等待的煩躁感。', emoji: '😖' },
+        { tag: 'guide', caption: '深呼吸，告訴自己「快輪到我了」。', emoji: '🖐️' },
+        { tag: 'affirm', caption: '輪到我了，順利買到想要的餐點。', emoji: '🍱' }
+      ],
+      options: [
+        { emoji: '😖', label: '不耐煩、想插隊', correct: true, feedback: '對，等待久了常會這樣，慢慢數數會好一點！' },
+        { emoji: '🥱', label: '完全不在意', correct: false, feedback: '再想想，等很久的時候身體感覺是…' }
+      ] },
     { unit: 'social', emoji: '🛝', scene: '同學一直霸占鞦韆不讓你玩。',
       cue: '😠 他皺著眉頭、抓緊鞦韆不放 → 這是不高興、不想讓的樣子',
       options: [
@@ -1173,6 +1207,28 @@
         { emoji: '🙂', label: '可以借我玩嗎？', correct: true, feedback: '對！禮貌詢問，同學也會很樂意分享 🌟' },
         { emoji: '😤', label: '直接搶過來玩', correct: false, feedback: '搶奪會讓同學難過，故事教我們的方法是？' }
       ] },
+    { unit: 'social', emoji: '👟', scene: '同學笑我的鞋子很奇怪。',
+      panels: [
+        { tag: 'trigger', caption: '同學笑我今天穿的鞋子看起來很奇怪。', emoji: '👟😆' },
+        { tag: 'view', caption: '同學可能覺得新奇好玩，不知道這樣笑我會難過。', emoji: '🤔' },
+        { tag: 'guide', caption: '我可以說：「這樣說我會不舒服，請不要這樣。」', emoji: '🛑' },
+        { tag: 'affirm', caption: '同學道歉了，我們繼續一起玩。', emoji: '👍' }
+      ],
+      options: [
+        { emoji: '🙂', label: '這樣說我會不舒服', correct: true, feedback: '對！說出感受，同學才會知道要停下來 🌟' },
+        { emoji: '😢', label: '默默走開不說話', correct: false, feedback: '同學可能不知道你的感受，再想想故事教我們的方法？' }
+      ] },
+    { unit: 'social', emoji: '🏃', scene: '同學在玩鬼抓人，我也想加入。',
+      panels: [
+        { tag: 'trigger', caption: '下課時，同學在玩鬼抓人，我也很想加入。', emoji: '🏃‍♂️🏃‍♀️' },
+        { tag: 'view', caption: '同學不知道我想玩，需要我自己開口問。', emoji: '💭' },
+        { tag: 'guide', caption: '我可以走過去問：「請問我可以一起玩嗎？」', emoji: '🙋' },
+        { tag: 'affirm', caption: '同學說好，我開心地加入遊戲。', emoji: '🎉' }
+      ],
+      options: [
+        { emoji: '🙂', label: '我可以一起玩嗎？', correct: true, feedback: '對！開口問,同學才知道你想加入 🌟' },
+        { emoji: '😐', label: '默默站在旁邊看', correct: false, feedback: '同學可能不會發現，再想想故事教我們的方法？' }
+      ] },
     { unit: 'env', emoji: '🎪', scene: '園遊會好吵好擠，頭有點暈。',
       options: [
         { emoji: '🧘', label: '找安靜角落深呼吸', correct: true, feedback: '你照顧了自己，超棒的決定！✨' },
@@ -1182,6 +1238,39 @@
       options: [
         { emoji: '🌬️', label: '深呼吸，調整心情', correct: true, feedback: '計畫變動也沒關係，你做得很好！' },
         { emoji: '😡', label: '生氣一直抱怨', correct: false, feedback: '抱怨改變不了天氣，試試深呼吸？' }
+      ] },
+    { unit: 'env', emoji: '🔔', scene: '消防演習警報聲很大聲。',
+      panels: [
+        { tag: 'trigger', caption: '學校突然響起消防演習警報，聲音很大很尖銳。', emoji: '🔔🔊' },
+        { tag: 'view', tagLabel: '身體訊號', caption: '覺得耳朵很痛、心跳加快，這是被嚇到的感覺。', emoji: '😨' },
+        { tag: 'guide', caption: '摀住耳朵保護自己，跟著大家排隊走出教室。', emoji: '🙉' },
+        { tag: 'affirm', caption: '演習結束，恢復安靜，我覺得安心多了。', emoji: '😌' }
+      ],
+      options: [
+        { emoji: '😨', label: '耳朵痛、心跳加快', correct: true, feedback: '對，巨大聲音會讓身體這樣反應，摀耳朵保護自己！' },
+        { emoji: '😴', label: '想睡覺', correct: false, feedback: '再想想，突然的巨大聲音會讓身體有什麼感覺？' }
+      ] },
+    { unit: 'env', emoji: '🪑', scene: '老師宣布明天要重新排座位。',
+      panels: [
+        { tag: 'trigger', caption: '老師宣布，明天班上要重新安排座位。', emoji: '🪑🔄' },
+        { tag: 'view', tagLabel: '身體訊號', caption: '心裡覺得不安，不知道會坐在哪裡。', emoji: '😰' },
+        { tag: 'guide', caption: '深呼吸，告訴自己「換座位也可以認識新同學」。', emoji: '✏️' },
+        { tag: 'affirm', caption: '換到新位置，旁邊同學也很友善。', emoji: '🌟' }
+      ],
+      options: [
+        { emoji: '😰', label: '心裡不安', correct: true, feedback: '對，面對改變常會這樣，深呼吸會有幫助！' },
+        { emoji: '😆', label: '完全不在乎', correct: false, feedback: '再想想，面對突然的改變身體感覺是…' }
+      ] },
+    { unit: 'env', emoji: '🐝', scene: '一隻蜜蜂突然飛進教室。',
+      panels: [
+        { tag: 'trigger', caption: '上課時，一隻蜜蜂突然飛進了教室。', emoji: '🐝🪟' },
+        { tag: 'view', tagLabel: '身體訊號', caption: '覺得很害怕、想尖叫，這是被嚇到的感覺。', emoji: '😱' },
+        { tag: 'guide', caption: '深呼吸，安靜舉手告訴老師，不要揮手拍打。', emoji: '🤫' },
+        { tag: 'affirm', caption: '老師打開窗戶，蜜蜂飛走了，教室恢復平靜。', emoji: '✨' }
+      ],
+      options: [
+        { emoji: '😱', label: '害怕、想尖叫', correct: true, feedback: '對，突然出現的東西會讓人害怕，安靜告訴老師最好！' },
+        { emoji: '🙂', label: '覺得很好玩', correct: false, feedback: '再想想，突然飛進來的蟲子會讓身體感覺是…' }
       ] }
   ];
 
@@ -1256,10 +1345,11 @@
     var isLast = junglePanelIndex === sc.panels.length - 1;
     var canGoBack = junglePanelIndex > 0;
     setJungleTint(u.tint);
-    var tag = panel.tag ? STORY_TAGS[panel.tag] : null;
+    // panel.tagLabel 可以覆蓋預設標籤文字（例如處己單元把「觀點」顯示成「身體訊號」），顏色still跟著 tag 分類走
+    var tag = panel.tag ? { label: panel.tagLabel || STORY_TAGS[panel.tag].label, bg: STORY_TAGS[panel.tag].bg, color: STORY_TAGS[panel.tag].color } : null;
     var visualHtml = panel.svg
       ? '<div class="panel-svg-wrap w-48 sm:w-60 h-48 sm:h-60 rounded-xl bg-white flex items-center justify-center overflow-hidden p-space-sm shadow-md">' + panel.svg + '</div>'
-      : '<span class="text-[104px] sm:text-[128px] leading-none drop-shadow-lg">' + panel.emoji + '</span>';
+      : '<span class="text-[56px] sm:text-[72px] leading-tight text-center max-w-full px-space-sm drop-shadow-lg">' + panel.emoji + '</span>';
     document.getElementById('jungle-content').innerHTML =
       '<div class="inline-flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-white/25 backdrop-blur-sm text-white font-label-sm text-label-sm mb-space-xs">' + u.icon + ' ' + u.name + '</div>' +
       // 用 div 而不是 button 當作外層容器，才能在裡面放真正可點擊的「上一格」按鈕
