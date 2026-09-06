@@ -1185,6 +1185,14 @@
       ] }
   ];
 
+  // 統一每一關的流程：沒有另外準備漫畫分鏡的關卡，自動補一格用情境文字當作「翻頁」畫面，
+  // 這樣不管哪一關，玩起來的順序跟版面都一樣（先看畫面 → 再回答），不會有的關卡直接跳答題
+  SCENARIOS.forEach(function (sc) {
+    if (!sc.panels || !sc.panels.length) {
+      sc.panels = [{ emoji: sc.emoji, caption: sc.scene }];
+    }
+  });
+
   function renderJungleDots() {
     var dots = document.getElementById('jungle-progress-dots');
     if (jungleStep === 'entrance') { dots.innerHTML = ''; return; }
@@ -1264,6 +1272,7 @@
       '</div>' +
       '<span class="flex items-center gap-1 text-on-surface-variant font-label-md text-label-md pointer-events-none">' + (isLast ? '開始回答' : '滑動或點一下繼續') + ' <span class="material-symbols-outlined text-[22px]">arrow_forward</span></span>' +
       (canGoBack ? '<button type="button" id="jungle-panel-prev" aria-label="上一格" class="absolute left-3 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/90 hover:bg-white flex items-center justify-center shadow-lg z-10"><span class="material-symbols-outlined text-[26px] text-on-surface">chevron_left</span></button>' : '') +
+      '<button type="button" id="jungle-panel-next" aria-label="下一格" class="absolute right-3 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/90 hover:bg-white flex items-center justify-center shadow-lg z-10"><span class="material-symbols-outlined text-[26px] text-on-surface">chevron_right</span></button>' +
       '</div>';
 
     function goNext() {
@@ -1277,6 +1286,8 @@
     frame.addEventListener('click', goNext);
     var prevBtn = document.getElementById('jungle-panel-prev');
     if (prevBtn) prevBtn.addEventListener('click', function (e) { e.stopPropagation(); goPrev(); });
+    var nextBtn = document.getElementById('jungle-panel-next');
+    if (nextBtn) nextBtn.addEventListener('click', function (e) { e.stopPropagation(); goNext(); });
 
     frame.addEventListener('touchstart', function (e) {
       jungleTouchStartX = e.touches[0].clientX;
