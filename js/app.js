@@ -1262,8 +1262,8 @@
       '<div class="w-full max-w-md min-h-[4.5rem] flex items-center justify-center bg-white/95 rounded-xl px-space-lg py-space-md shadow-md">' +
       '<p class="font-headline-md text-headline-md text-on-surface text-center leading-relaxed">' + panel.caption + '</p>' +
       '</div>' +
+      '<span class="flex items-center gap-1 text-on-surface-variant font-label-md text-label-md pointer-events-none">' + (isLast ? '開始回答' : '滑動或點一下繼續') + ' <span class="material-symbols-outlined text-[22px]">arrow_forward</span></span>' +
       (canGoBack ? '<button type="button" id="jungle-panel-prev" aria-label="上一格" class="absolute left-3 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/90 hover:bg-white flex items-center justify-center shadow-lg z-10"><span class="material-symbols-outlined text-[26px] text-on-surface">chevron_left</span></button>' : '') +
-      '<span class="absolute bottom-4 right-4 flex items-center gap-1 text-white/90 font-label-md text-label-md pointer-events-none">' + (isLast ? '開始回答' : '滑動或點一下繼續') + ' <span class="material-symbols-outlined text-[22px]">arrow_forward</span></span>' +
       '</div>';
 
     function goNext() {
