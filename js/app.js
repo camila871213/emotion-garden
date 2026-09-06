@@ -1597,6 +1597,68 @@
     renderProfileList();
   });
 
+  // ---------- 老師專用：匯出所有學生資料（本機備份 + 研究記錄用） ----------
+  function csvEscape(val) {
+    var s = (val === undefined || val === null) ? '' : String(val);
+    if (/[",\n]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"';
+    return s;
+  }
+
+  function downloadBlob(filename, mime, content) {
+    var blob = new Blob([content], { type: mime + ';charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+  }
+
+  function exportAllStudentData() {
+    var profiles = loadProfiles();
+    if (!profiles.length) {
+      showModal('<div class="text-center space-y-space-md"><p class="font-body-md text-body-md text-on-surface">目前還沒有任何學生資料可以匯出。</p><button class="w-full h-12 rounded-full bg-primary text-on-primary font-label-md text-label-md" onclick="closeModal()">好的</button></div>');
+      return;
+    }
+    var today = todayStr();
+    var fullBackup = { exportedAt: new Date().toISOString(), profiles: [] };
+    var diaryRows = [['學生姓名', '日期', '心情', '日記內容', '獲得水滴']];
+    var summaryRows = [['學生姓名', '目前盆栽階段(0-6)', '目前甘露庫存', '已解鎖仙子數(共5)', '累計孵化次數', '日記篇數', '建立日期']];
+
+    profiles.forEach(function (p) {
+      var st = loadState(p.id);
+      fullBackup.profiles.push({ id: p.id, name: p.name, avatar: p.avatar, createdAt: p.createdAt, state: st });
+      st.diaryEntries.forEach(function (e) {
+        var moodLabel = (MOODS[e.mood] && MOODS[e.mood].label) || e.mood;
+        diaryRows.push([p.name, e.date, moodLabel, e.text || '', e.drops]);
+      });
+      summaryRows.push([p.name, st.growthStage, st.waterInventory, st.unlockedFairies.length, st.harvestCount, st.diaryEntries.length, p.createdAt]);
+    });
+
+    var diaryCsv = '﻿' + diaryRows.concat(summaryRows.length ? [[], ['— 學生總覽 —']].concat(summaryRows) : [])
+      .map(function (row) { return row.map(csvEscape).join(','); }).join('\r\n');
+
+    downloadBlob('心靈植癒園_學生資料_' + today + '.csv', 'text/csv', diaryCsv);
+    setTimeout(function () {
+      downloadBlob('心靈植癒園_完整備份_' + today + '.json', 'application/json', JSON.stringify(fullBackup, null, 2));
+    }, 400);
+
+    showModal(
+      '<div class="text-center space-y-space-md">' +
+      '<span class="material-symbols-outlined text-primary" style="font-size:48px;">download_done</span>' +
+      '<h2 class="font-headline-sm text-headline-sm text-primary">已匯出 ' + profiles.length + ' 位學生的資料</h2>' +
+      '<p class="font-body-sm text-body-sm text-on-surface-variant text-left">下載了兩個檔案：<br>' +
+      '・CSV(可用 Excel 開啟，含日記內容與總覽)<br>' +
+      '・JSON(完整備份，供之後還原用)</p>' +
+      '<button class="w-full h-12 rounded-full bg-primary text-on-primary font-label-md text-label-md" onclick="closeModal()">好的</button>' +
+      '</div>'
+    );
+  }
+
+  document.getElementById('teacher-export-btn').addEventListener('click', exportAllStudentData);
+
   // ---------- 啟動 ----------
   window.__switchView = switchView;
   window.addEventListener('hashchange', function () {
