@@ -121,6 +121,13 @@
   content: '';
 }
 
+/* 叢林四格漫畫的自訂 SVG 插圖：讓 SVG 依容器大小縮放，而不是卡在原本畫的 140px */
+.panel-svg-wrap svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
 /* 花園居民：草地上走動／飛翔的仙子與精靈小圖 */
 .meadow-sprite {
   position: absolute;

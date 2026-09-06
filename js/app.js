@@ -1239,32 +1239,55 @@
     affirm:  { label: '肯定', bg: '#FEFCBF', color: '#B7791F' }
   };
 
+  var jungleTouchStartX = null;
+
   function renderJunglePanels(idx) {
     var sc = SCENARIOS[idx];
     var u = UNITS[sc.unit];
     var panel = sc.panels[junglePanelIndex];
     var isLast = junglePanelIndex === sc.panels.length - 1;
+    var canGoBack = junglePanelIndex > 0;
     setJungleTint(u.tint);
     var tag = panel.tag ? STORY_TAGS[panel.tag] : null;
     var visualHtml = panel.svg
-      ? '<div class="w-32 h-32 rounded-xl bg-white flex items-center justify-center overflow-hidden">' + panel.svg + '</div>'
-      : '<span class="text-[72px] leading-none drop-shadow-lg">' + panel.emoji + '</span>';
+      ? '<div class="panel-svg-wrap w-48 sm:w-60 h-48 sm:h-60 rounded-xl bg-white flex items-center justify-center overflow-hidden p-space-sm shadow-md">' + panel.svg + '</div>'
+      : '<span class="text-[104px] sm:text-[128px] leading-none drop-shadow-lg">' + panel.emoji + '</span>';
     document.getElementById('jungle-content').innerHTML =
       '<div class="inline-flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-white/25 backdrop-blur-sm text-white font-label-sm text-label-sm mb-space-xs">' + u.icon + ' ' + u.name + '</div>' +
-      '<button type="button" id="jungle-panel-frame" class="relative w-full max-w-sm aspect-square rounded-2xl border-4 border-white/80 bg-black/25 backdrop-blur-sm shadow-2xl flex flex-col items-center justify-center gap-space-sm p-space-lg active:scale-[0.98] transition-all">' +
-      '<span class="absolute top-3 left-3 px-space-sm py-0.5 rounded-full bg-white/90 text-on-surface font-label-sm text-label-sm font-bold">' + (junglePanelIndex + 1) + ' / ' + sc.panels.length + '</span>' +
-      (tag ? '<span class="absolute top-3 right-3 px-space-sm py-0.5 rounded-full font-label-sm text-label-sm font-bold" style="background:' + tag.bg + ';color:' + tag.color + ';">' + tag.label + '</span>' : '') +
+      // 用 div 而不是 button 當作外層容器，才能在裡面放真正可點擊的「上一格」按鈕
+      '<div id="jungle-panel-frame" class="relative w-full max-w-md sm:max-w-xl rounded-2xl border-4 border-white/80 bg-black/25 backdrop-blur-sm shadow-2xl flex flex-col items-center justify-center gap-space-md p-space-xl transition-all active:scale-[0.98] cursor-pointer select-none" style="touch-action: pan-y;">' +
+      '<span class="absolute top-4 left-4 px-space-md py-1 rounded-full bg-white/90 text-on-surface font-label-md text-label-md font-bold">' + (junglePanelIndex + 1) + ' / ' + sc.panels.length + '</span>' +
+      (tag ? '<span class="absolute top-4 right-4 px-space-md py-1 rounded-full font-label-md text-label-md font-bold" style="background:' + tag.bg + ';color:' + tag.color + ';">' + tag.label + '</span>' : '') +
       visualHtml +
-      '<p class="font-headline-sm text-headline-sm text-white drop-shadow-lg text-center">' + panel.caption + '</p>' +
-      '<span class="absolute bottom-3 right-3 flex items-center gap-1 text-white/90 font-label-sm text-label-sm">' + (isLast ? '開始回答' : '點一下繼續') + ' <span class="material-symbols-outlined text-[18px]">arrow_forward</span></span>' +
-      '</button>';
-    document.getElementById('jungle-panel-frame').addEventListener('click', function () {
-      if (isLast) {
-        renderJungleScenario(idx);
-      } else {
-        junglePanelIndex += 1;
-        renderJunglePanels(idx);
-      }
+      '<div class="w-full max-w-md min-h-[4.5rem] flex items-center justify-center bg-white/95 rounded-xl px-space-lg py-space-md shadow-md">' +
+      '<p class="font-headline-md text-headline-md text-on-surface text-center leading-relaxed">' + panel.caption + '</p>' +
+      '</div>' +
+      (canGoBack ? '<button type="button" id="jungle-panel-prev" aria-label="上一格" class="absolute left-3 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/90 hover:bg-white flex items-center justify-center shadow-lg z-10"><span class="material-symbols-outlined text-[26px] text-on-surface">chevron_left</span></button>' : '') +
+      '<span class="absolute bottom-4 right-4 flex items-center gap-1 text-white/90 font-label-md text-label-md pointer-events-none">' + (isLast ? '開始回答' : '滑動或點一下繼續') + ' <span class="material-symbols-outlined text-[22px]">arrow_forward</span></span>' +
+      '</div>';
+
+    function goNext() {
+      if (isLast) { renderJungleScenario(idx); } else { junglePanelIndex += 1; renderJunglePanels(idx); }
+    }
+    function goPrev() {
+      if (canGoBack) { junglePanelIndex -= 1; renderJunglePanels(idx); }
+    }
+
+    var frame = document.getElementById('jungle-panel-frame');
+    frame.addEventListener('click', goNext);
+    var prevBtn = document.getElementById('jungle-panel-prev');
+    if (prevBtn) prevBtn.addEventListener('click', function (e) { e.stopPropagation(); goPrev(); });
+
+    frame.addEventListener('touchstart', function (e) {
+      jungleTouchStartX = e.touches[0].clientX;
+    }, { passive: true });
+    frame.addEventListener('touchend', function (e) {
+      if (jungleTouchStartX === null) return;
+      var dx = e.changedTouches[0].clientX - jungleTouchStartX;
+      jungleTouchStartX = null;
+      if (Math.abs(dx) < 40) return; // 太短當作點擊，交給 click 事件處理，避免重複觸發
+      e.preventDefault();
+      if (dx < 0) goNext(); else goPrev();
     });
   }
 
@@ -1274,24 +1297,38 @@
     return MOODS[key];
   }
 
+  // 打亂選項顯示順序，避免正確答案總是固定在同一邊讓學生用猜的；同一關重試時順序保持不變，只有重新進入才會再洗牌
+  function getOptionOrder(sc) {
+    if (!sc._order) {
+      var order = sc.options.map(function (_, i) { return i; });
+      for (var i = order.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var tmp = order[i]; order[i] = order[j]; order[j] = tmp;
+      }
+      sc._order = order;
+    }
+    return sc._order;
+  }
+
   function renderJungleScenario(idx, excludedOis) {
     excludedOis = excludedOis || [];
     var sc = SCENARIOS[idx];
     var u = UNITS[sc.unit];
     setJungleTint(u.tint);
-    var html = '<div class="inline-flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-white/25 backdrop-blur-sm text-white font-label-sm text-label-sm mb-space-xs">' + u.icon + ' ' + u.name + '</div>' +
-      '<div class="text-[64px] leading-none drop-shadow-lg">' + sc.emoji + '</div>' +
-      '<p class="font-headline-sm text-headline-sm text-white drop-shadow-lg max-w-md">' + sc.scene + '</p>' +
-      (sc.cue ? '<p class="font-label-md text-label-md text-on-surface bg-white/85 backdrop-blur-sm rounded-full px-space-md py-1 max-w-md">' + sc.cue + '</p>' : '') +
-      '<p class="font-label-md text-label-md text-white/90 drop-shadow -mt-space-sm">' + u.prompt + '</p>' +
-      '<div class="flex flex-col sm:flex-row gap-space-sm w-full max-w-md" id="jungle-options">' +
-      sc.options.map(function (o, oi) {
+    var html = '<div class="inline-flex items-center gap-1.5 px-space-md py-1.5 rounded-full bg-white/25 backdrop-blur-sm text-white font-label-md text-label-md mb-space-xs">' + u.icon + ' ' + u.name + '</div>' +
+      '<div class="text-[96px] sm:text-[112px] leading-none drop-shadow-lg">' + sc.emoji + '</div>' +
+      '<div class="max-w-lg bg-white/95 rounded-xl px-space-lg py-space-md shadow-md"><p class="font-headline-md text-headline-md text-on-surface text-center leading-relaxed">' + sc.scene + '</p></div>' +
+      (sc.cue ? '<p class="font-label-lg text-label-lg text-on-surface bg-white/85 backdrop-blur-sm rounded-full px-space-lg py-1.5 max-w-lg text-center">' + sc.cue + '</p>' : '') +
+      '<p class="font-label-lg text-label-lg text-white/90 drop-shadow -mt-space-sm">' + u.prompt + '</p>' +
+      '<div class="flex flex-col sm:flex-row gap-space-md w-full max-w-lg" id="jungle-options">' +
+      getOptionOrder(sc).map(function (oi) {
+        var o = sc.options[oi];
         var isOut = excludedOis.indexOf(oi) !== -1;
-        return '<button type="button" data-oi="' + oi + '" ' + (isOut ? 'disabled' : '') + ' class="jungle-opt flex-1 flex flex-col items-center gap-1 px-space-md py-space-md rounded-xl shadow-xl transition-all ' +
+        return '<button type="button" data-oi="' + oi + '" ' + (isOut ? 'disabled' : '') + ' class="jungle-opt flex-1 flex flex-col items-center gap-1.5 px-space-lg py-space-lg rounded-xl shadow-xl transition-all ' +
           (isOut ? 'bg-white/40 opacity-40 grayscale cursor-not-allowed' : 'bg-white/90 hover:bg-white active:scale-95') + '">' +
-          '<span class="text-[36px] leading-none">' + o.emoji + '</span>' +
-          '<span class="font-label-md text-label-md text-on-surface">' + o.label + '</span>' +
-          (isOut ? '<span class="text-[11px] text-on-surface-variant">已經試過囉</span>' : '') +
+          '<span class="text-[56px] leading-none">' + o.emoji + '</span>' +
+          '<span class="font-label-lg text-label-lg text-on-surface text-center">' + o.label + '</span>' +
+          (isOut ? '<span class="text-[13px] text-on-surface-variant">已經試過囉</span>' : '') +
           '</button>';
       }).join('') + '</div>' +
       '<div id="jungle-feedback" class="min-h-[3rem]"></div>';
@@ -1345,6 +1382,7 @@
     document.getElementById('jungle-restart-btn').addEventListener('click', function () {
       jungleStep = 0;
       jungleAnswered = false;
+      SCENARIOS.forEach(function (sc) { delete sc._order; }); // 重玩時重新洗牌選項順序
       renderJungleStep();
     });
   }
