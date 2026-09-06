@@ -1157,6 +1157,22 @@
         { emoji: '🙂', label: '你需要幫忙嗎？', correct: true, feedback: '關心對方，事情更容易一起解決！' },
         { emoji: '😠', label: '隨便你，爛透了', correct: false, feedback: '這樣說會傷感情，再想想？' }
       ] },
+    { unit: 'social', emoji: '🚗', scene: '同學在玩我最想玩的玩具車。',
+      // 社會性故事四格漫畫（Carol Gray 格式：觸發→觀點→指導→肯定），老師提供
+      panels: [
+        { tag: 'trigger', caption: '下課時，我看到同學正在玩我最想玩的玩具車。',
+          svg: '<svg viewBox="0 0 100 100" width="140" height="140"><circle cx="50" cy="40" r="20" fill="#E2E8F0" /><rect x="35" y="60" width="30" height="30" rx="4" fill="#E2E8F0" /><rect x="40" y="65" width="20" height="15" fill="#F6AD55" /><circle cx="45" cy="80" r="4" fill="#4A5568" /><circle cx="55" cy="80" r="4" fill="#4A5568" /><path d="M 20 40 Q 30 35 40 40" stroke="#FC8181" stroke-width="2" stroke-dasharray="4,4" fill="none" /></svg>' },
+        { tag: 'view', caption: '我很想玩，但如果我沒問就直接搶過來，同學會很難過。',
+          svg: '<svg viewBox="0 0 100 100" width="140" height="140"><path d="M 10 50 Q 10 20 50 20 Q 90 20 90 50 Q 90 80 50 80 Q 20 80 10 50" fill="#EBF8FF" stroke="#90CDF4" stroke-width="2" /><circle cx="20" cy="85" r="5" fill="#EBF8FF" stroke="#90CDF4" stroke-width="2" /><circle cx="10" cy="95" r="3" fill="#EBF8FF" stroke="#90CDF4" stroke-width="2" /><circle cx="50" cy="45" r="15" fill="#FED7D7" /><path d="M 45 42 L 48 45 M 55 42 L 52 45" stroke="#9B2C2C" stroke-width="2" /><path d="M 45 52 Q 50 48 55 52" stroke="#9B2C2C" stroke-width="2" fill="none" /><path d="M 45 47 L 45 55 M 55 47 L 55 55" stroke="#63B3ED" stroke-width="2" stroke-dasharray="2,2" /></svg>' },
+        { tag: 'guide', caption: '我可以走到他旁邊，輕輕地說：「請問你玩完可以借我嗎？」',
+          svg: '<svg viewBox="0 0 100 100" width="140" height="140"><circle cx="30" cy="60" r="15" fill="#C6F6D5" /><rect x="40" y="15" width="50" height="30" rx="8" fill="#FFFFFF" stroke="#48BB78" stroke-width="2" /><polygon points="45,45 50,45 40,55" fill="#FFFFFF" /><line x1="45" y1="45" x2="40" y2="55" stroke="#48BB78" stroke-width="2" /><line x1="40" y1="55" x2="50" y2="45" stroke="#48BB78" stroke-width="2" /><text x="65" y="35" font-size="12" text-anchor="middle" fill="#2F855A" font-weight="bold">可以借我嗎？</text></svg>' },
+        { tag: 'affirm', caption: '同學答應了！在等待時，我可以先玩別的，最後我們都能開心地玩。',
+          svg: '<svg viewBox="0 0 100 100" width="140" height="140"><circle cx="35" cy="45" r="15" fill="#C6F6D5" /><circle cx="65" cy="45" r="15" fill="#FEEBC8" /><path d="M 30 42 Q 32 40 34 42 M 36 42 Q 38 40 40 42" stroke="#22543D" stroke-width="1.5" fill="none" /><path d="M 30 48 Q 35 53 40 48" stroke="#22543D" stroke-width="1.5" fill="none" /><path d="M 60 42 Q 62 40 64 42 M 66 42 Q 68 40 70 42" stroke="#7B341E" stroke-width="1.5" fill="none" /><path d="M 60 48 Q 65 53 70 48" stroke="#7B341E" stroke-width="1.5" fill="none" /><rect x="42" y="65" width="16" height="12" fill="#F6AD55" /><path d="M 50 20 C 45 15 40 25 50 30 C 60 25 55 15 50 20" fill="#FC8181" /></svg>' }
+      ],
+      options: [
+        { emoji: '🙂', label: '可以借我玩嗎？', correct: true, feedback: '對！禮貌詢問，同學也會很樂意分享 🌟' },
+        { emoji: '😤', label: '直接搶過來玩', correct: false, feedback: '搶奪會讓同學難過，故事教我們的方法是？' }
+      ] },
     { unit: 'env', emoji: '🎪', scene: '園遊會好吵好擠，頭有點暈。',
       options: [
         { emoji: '🧘', label: '找安靜角落深呼吸', correct: true, feedback: '你照顧了自己，超棒的決定！✨' },
@@ -1215,17 +1231,30 @@
   var junglePanelIndex = 0;
 
   // 佔位版「四格漫畫」翻頁閱讀器：之後把 caption 的 emoji 佔位框換成 Stitch 畫的分鏡圖即可
+  // 社會性故事四格漫畫的四個階段標籤（Carol Gray Social Story 格式）：觸發／觀點／指導／肯定
+  var STORY_TAGS = {
+    trigger: { label: '觸發', bg: '#FEEBC8', color: '#C05621' },
+    view:    { label: '觀點', bg: '#EBF8FF', color: '#2B6CB0' },
+    guide:   { label: '指導', bg: '#F0FFF4', color: '#2F855A' },
+    affirm:  { label: '肯定', bg: '#FEFCBF', color: '#B7791F' }
+  };
+
   function renderJunglePanels(idx) {
     var sc = SCENARIOS[idx];
     var u = UNITS[sc.unit];
     var panel = sc.panels[junglePanelIndex];
     var isLast = junglePanelIndex === sc.panels.length - 1;
     setJungleTint(u.tint);
+    var tag = panel.tag ? STORY_TAGS[panel.tag] : null;
+    var visualHtml = panel.svg
+      ? '<div class="w-32 h-32 rounded-xl bg-white flex items-center justify-center overflow-hidden">' + panel.svg + '</div>'
+      : '<span class="text-[72px] leading-none drop-shadow-lg">' + panel.emoji + '</span>';
     document.getElementById('jungle-content').innerHTML =
       '<div class="inline-flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-white/25 backdrop-blur-sm text-white font-label-sm text-label-sm mb-space-xs">' + u.icon + ' ' + u.name + '</div>' +
       '<button type="button" id="jungle-panel-frame" class="relative w-full max-w-sm aspect-square rounded-2xl border-4 border-white/80 bg-black/25 backdrop-blur-sm shadow-2xl flex flex-col items-center justify-center gap-space-sm p-space-lg active:scale-[0.98] transition-all">' +
       '<span class="absolute top-3 left-3 px-space-sm py-0.5 rounded-full bg-white/90 text-on-surface font-label-sm text-label-sm font-bold">' + (junglePanelIndex + 1) + ' / ' + sc.panels.length + '</span>' +
-      '<span class="text-[72px] leading-none drop-shadow-lg">' + panel.emoji + '</span>' +
+      (tag ? '<span class="absolute top-3 right-3 px-space-sm py-0.5 rounded-full font-label-sm text-label-sm font-bold" style="background:' + tag.bg + ';color:' + tag.color + ';">' + tag.label + '</span>' : '') +
+      visualHtml +
       '<p class="font-headline-sm text-headline-sm text-white drop-shadow-lg text-center">' + panel.caption + '</p>' +
       '<span class="absolute bottom-3 right-3 flex items-center gap-1 text-white/90 font-label-sm text-label-sm">' + (isLast ? '開始回答' : '點一下繼續') + ' <span class="material-symbols-outlined text-[18px]">arrow_forward</span></span>' +
       '</button>';
