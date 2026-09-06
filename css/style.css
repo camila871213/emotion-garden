@@ -134,6 +134,12 @@
 }
 .meadow-sprite:hover { filter: drop-shadow(0 6px 10px rgba(0,0,0,0.35)) brightness(1.05); }
 
+/* 簡化動畫模式：靜止不動，只留最基本的存在感 */
+.meadow-sprite-calm {
+  animation: none;
+  transition: none;
+}
+
 .fade-swap {
   transition: opacity 0.2s ease;
 }

@@ -69,7 +69,8 @@
       harvestCount: 0,
       diaryEntries: [],
       lastEntryDate: null,
-      currentMood: null
+      currentMood: null,
+      reducedMotion: false // 感官調節：關閉非必要的動畫效果（草地走動、彈開、閃光、蹦跳登場等）
     };
     if (!raw) return defaults;
     try {
@@ -145,6 +146,7 @@
     var overlay = document.getElementById('app-modal-overlay');
     overlay.classList.add('hidden');
     overlay.classList.remove('flex');
+    if (window.__stopQuickBreathing) window.__stopQuickBreathing();
   }
   document.getElementById('app-modal-overlay').addEventListener('click', function (e) {
     if (e.target === this) closeModal();
@@ -320,18 +322,30 @@
     var layer = document.getElementById('meadow-sprites-layer');
     layer.innerHTML = '';
     var w = stage.clientWidth, h = stage.clientHeight;
-    meadowResidents().forEach(function (resident) {
+    var calm = !!(state && state.reducedMotion);
+    var residents = meadowResidents();
+    // 簡化動畫模式：不隨機走動、不彈開，均勻排好、保持站姿不蹦跳，降低感官刺激
+    residents.forEach(function (resident, idx) {
       var img = document.createElement('img');
-      img.src = resident.img;
+      img.src = calm ? resident.standImg || resident.img : resident.img;
       img.alt = resident.name;
-      img.className = 'meadow-sprite';
-      img.style.left = (Math.random() * Math.max(1, w - MEADOW_SPRITE_SIZE)) + 'px';
-      img.style.top = (resident.canFly ? Math.random() * Math.max(1, h * 0.5) : h * 0.6 + Math.random() * (h * 0.3)) + 'px';
-      img.addEventListener('click', function (e) { e.stopPropagation(); showResidentModal(resident); });
-      layer.appendChild(img);
-      startMeadowWander(img, resident, stage, layer);
+      img.className = calm ? 'meadow-sprite meadow-sprite-calm' : 'meadow-sprite';
+      if (calm) {
+        var cols = Math.ceil(Math.sqrt(residents.length));
+        var col = idx % cols, row = Math.floor(idx / cols);
+        img.style.left = (20 + col * (MEADOW_SPRITE_SIZE + 16)) + 'px';
+        img.style.top = (20 + row * (MEADOW_SPRITE_SIZE + 16)) + 'px';
+        img.addEventListener('click', function (e) { e.stopPropagation(); showResidentModal(resident); });
+        layer.appendChild(img);
+      } else {
+        img.style.left = (Math.random() * Math.max(1, w - MEADOW_SPRITE_SIZE)) + 'px';
+        img.style.top = (resident.canFly ? Math.random() * Math.max(1, h * 0.5) : h * 0.6 + Math.random() * (h * 0.3)) + 'px';
+        img.addEventListener('click', function (e) { e.stopPropagation(); showResidentModal(resident); });
+        layer.appendChild(img);
+        startMeadowWander(img, resident, stage, layer);
+      }
     });
-    startMeadowCollisionLoop(layer);
+    if (!calm) startMeadowCollisionLoop(layer);
   }
 
   function playWaterFx() {
@@ -389,7 +403,8 @@
     meadowInitialized = false; // 有新仙子加入花園居民，重新整理草地
     renderGarden();
     playSuccess();
-    var imgClass = m.hatchFrames ? 'inline-block w-40 h-40 object-contain drop-shadow-lg' : 'char-pop-in inline-block w-40 h-40 object-contain drop-shadow-lg';
+    var calmHatch = !!state.reducedMotion;
+    var imgClass = calmHatch ? 'inline-block w-40 h-40 object-contain drop-shadow-lg' : (m.hatchFrames ? 'inline-block w-40 h-40 object-contain drop-shadow-lg' : 'char-pop-in inline-block w-40 h-40 object-contain drop-shadow-lg');
     showModal(
       '<div class="text-center space-y-space-md">' +
       '<div class="relative inline-block"><img id="hatch-fairy-img" src="' + m.fairyImg + '" alt="' + m.fairyName + '" class="' + imgClass + '" /></div>' +
@@ -404,7 +419,7 @@
     );
     var hatchPitch = hashPitch(m.fairyName);
     var hatchImg = document.getElementById('hatch-fairy-img');
-    if (m.hatchFrames) {
+    if (m.hatchFrames && !calmHatch) {
       // 播放蛻變分解動畫（去背後的影片截幀），先預先載入所有格數再播放，避免邊播邊等圖造成播放變慢
       var hf = m.hatchFrames;
       var urls = [];
@@ -798,18 +813,21 @@
   function makeCharacterInteractive(imgEl, voicePitch) {
     if (!imgEl || imgEl.dataset.charBound) return;
     imgEl.dataset.charBound = '1';
-    imgEl.classList.add('char-portrait');
+    var calm = !!(state && state.reducedMotion);
+    if (!calm) imgEl.classList.add('char-portrait');
     var wrapper = imgEl.parentElement;
     if (wrapper && getComputedStyle(wrapper).position === 'static') wrapper.style.position = 'relative';
     imgEl.addEventListener('click', function (e) {
       e.stopPropagation();
-      imgEl.classList.remove('char-tap-fx');
-      void imgEl.offsetWidth; // 強制 reflow 讓動畫可以重新觸發
-      imgEl.classList.add('char-tap-fx');
+      if (!calm) {
+        imgEl.classList.remove('char-tap-fx');
+        void imgEl.offsetWidth; // 強制 reflow 讓動畫可以重新觸發
+        imgEl.classList.add('char-tap-fx');
+      }
       charBlip(voicePitch || 440);
       setTimeout(function () { charBlip((voicePitch || 440) * 1.15); }, 90);
       if (wrapper) {
-        spawnSparkles(wrapper);
+        if (!calm) spawnSparkles(wrapper);
         var bubble = document.createElement('div');
         bubble.className = 'char-speech-bubble';
         bubble.textContent = REACTION_LINES[Math.floor(Math.random() * REACTION_LINES.length)];
@@ -824,6 +842,7 @@
     var btn = e.target.closest('button, a.nav-link, a.nav-link-mobile, a[data-view="jump"]');
     if (!btn) return;
     playTap();
+    if (state && state.reducedMotion) return; // 簡化動畫模式下不做漣漪擴散效果，但音效照常
     var rect = btn.getBoundingClientRect();
     var ripple = document.createElement('span');
     var size = Math.max(rect.width, rect.height) * 0.9;
@@ -857,6 +876,76 @@
       icon.textContent = 'volume_off';
     }
   });
+
+  // ---------- 感官調節：簡化動畫開關 ----------
+  function renderMotionToggle() {
+    var btn = document.getElementById('motion-toggle-btn');
+    var icon = document.getElementById('motion-toggle-icon');
+    if (!state) return;
+    icon.textContent = state.reducedMotion ? 'motion_photos_paused' : 'animation';
+    btn.classList.toggle('bg-primary-fixed', !!state.reducedMotion);
+    btn.title = state.reducedMotion ? '已簡化動畫，點一下恢復正常動畫' : '簡化動畫（適合感官敏感的孩子）';
+  }
+  document.getElementById('motion-toggle-btn').addEventListener('click', function () {
+    state.reducedMotion = !state.reducedMotion;
+    saveState();
+    renderMotionToggle();
+    meadowInitialized = false;
+    if (document.getElementById('view-garden') && !document.getElementById('view-garden').hidden) renderGarden();
+  });
+
+  // ---------- 隨時可用的深呼吸快捷鍵 ----------
+  var quickBreathInterval = null;
+  var quickBreathOsc = null, quickBreathGain = null;
+  function openQuickBreathing() {
+    showModal(
+      '<div class="text-center space-y-space-lg">' +
+      '<h2 class="font-headline-sm text-headline-sm text-primary flex items-center justify-center gap-space-xs"><span class="material-symbols-outlined">self_improvement</span> 深呼吸一下</h2>' +
+      '<div class="breath-ring mx-auto" id="quick-breath-ring"><span class="font-headline-md text-headline-md text-primary" id="quick-breath-text">準備好了嗎？</span></div>' +
+      '<button class="w-full h-14 rounded-full bg-primary text-on-primary font-label-md text-label-md" onclick="closeModal()">👍 好多了，關閉</button>' +
+      '</div>'
+    );
+    var ring = document.getElementById('quick-breath-ring');
+    var text = document.getElementById('quick-breath-text');
+    var phase = 'inhale';
+    ring.classList.add('inhale');
+    text.textContent = '慢慢吸氣……';
+    if (soundEnabled) {
+      var ctx = ensureAudio();
+      quickBreathOsc = ctx.createOscillator();
+      quickBreathGain = ctx.createGain();
+      quickBreathOsc.type = 'sine';
+      quickBreathOsc.frequency.setValueAtTime(196, ctx.currentTime);
+      quickBreathGain.gain.setValueAtTime(0, ctx.currentTime);
+      quickBreathGain.gain.linearRampToValueAtTime(0.05, ctx.currentTime + 1);
+      quickBreathOsc.connect(quickBreathGain);
+      quickBreathGain.connect(ctx.destination);
+      quickBreathOsc.start();
+    }
+    quickBreathInterval = setInterval(function () {
+      if (phase === 'inhale') {
+        ring.classList.remove('inhale'); ring.classList.add('exhale');
+        text.textContent = '慢慢吐氣……';
+        phase = 'exhale';
+      } else {
+        ring.classList.remove('exhale'); ring.classList.add('inhale');
+        text.textContent = '慢慢吸氣……';
+        phase = 'inhale';
+      }
+    }, 4000);
+  }
+  window.__stopQuickBreathing = function () {
+    if (quickBreathInterval) { clearInterval(quickBreathInterval); quickBreathInterval = null; }
+    if (quickBreathOsc) {
+      try {
+        var ctx = audioCtx;
+        quickBreathGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.3);
+        (function (osc) { setTimeout(function () { try { osc.stop(); } catch (e) {} }, 350); })(quickBreathOsc);
+      } catch (e) {}
+      quickBreathOsc = null;
+    }
+  };
+  document.getElementById('quick-breath-btn').addEventListener('click', openQuickBreathing);
 
   // ============ 智慧圖書館 ============
   var libInitialized = false;
@@ -1057,11 +1146,13 @@
         { emoji: '🕺', label: '想跳舞', correct: false, feedback: '再想想，這時候的身體感覺是…' }
       ] },
     { unit: 'social', emoji: '🛝', scene: '同學一直霸占鞦韆不讓你玩。',
+      cue: '😠 他皺著眉頭、抓緊鞦韆不放 → 這是不高興、不想讓的樣子',
       options: [
         { emoji: '🙂', label: '我們輪流玩好嗎？', correct: true, feedback: '很棒！說出來，大家都能玩到 🌟' },
         { emoji: '😤', label: '你很自私耶！', correct: false, feedback: '這樣說可能會吵起來，再想想？' }
       ] },
     { unit: 'social', emoji: '📋', scene: '分組報告，同學都不幫忙。',
+      cue: '😞 他低著頭、不說話 → 這是不知道怎麼做、有點不好意思的樣子',
       options: [
         { emoji: '🙂', label: '你需要幫忙嗎？', correct: true, feedback: '關心對方，事情更容易一起解決！' },
         { emoji: '😠', label: '隨便你，爛透了', correct: false, feedback: '這樣說會傷感情，再想想？' }
@@ -1162,6 +1253,7 @@
     var html = '<div class="inline-flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-white/25 backdrop-blur-sm text-white font-label-sm text-label-sm mb-space-xs">' + u.icon + ' ' + u.name + '</div>' +
       '<div class="text-[64px] leading-none drop-shadow-lg">' + sc.emoji + '</div>' +
       '<p class="font-headline-sm text-headline-sm text-white drop-shadow-lg max-w-md">' + sc.scene + '</p>' +
+      (sc.cue ? '<p class="font-label-md text-label-md text-on-surface bg-white/85 backdrop-blur-sm rounded-full px-space-md py-1 max-w-md">' + sc.cue + '</p>' : '') +
       '<p class="font-label-md text-label-md text-white/90 drop-shadow -mt-space-sm">' + u.prompt + '</p>' +
       '<div class="flex flex-col sm:flex-row gap-space-sm w-full max-w-md" id="jungle-options">' +
       sc.options.map(function (o, oi) {
@@ -1170,7 +1262,7 @@
           (isOut ? 'bg-white/40 opacity-40 grayscale cursor-not-allowed' : 'bg-white/90 hover:bg-white active:scale-95') + '">' +
           '<span class="text-[36px] leading-none">' + o.emoji + '</span>' +
           '<span class="font-label-md text-label-md text-on-surface">' + o.label + '</span>' +
-          (isOut ? '<span class="text-[11px] text-on-surface-variant">✕ 試過了</span>' : '') +
+          (isOut ? '<span class="text-[11px] text-on-surface-variant">已經試過囉</span>' : '') +
           '</button>';
       }).join('') + '</div>' +
       '<div id="jungle-feedback" class="min-h-[3rem]"></div>';
@@ -1183,7 +1275,7 @@
         var choice = sc.options[oi];
         document.querySelectorAll('.jungle-opt').forEach(function (b) { b.classList.add('opacity-50'); });
         btn.classList.remove('opacity-50');
-        btn.classList.add('ring-4', choice.correct ? 'ring-primary' : 'ring-secondary');
+        btn.classList.add('ring-4', choice.correct ? 'ring-primary' : 'ring-outline');
         if (choice.correct) playSuccess(); else playWrong();
         var fb = document.getElementById('jungle-feedback');
 
@@ -1202,7 +1294,7 @@
           var fairy = pickAssistFairy();
           var nextExcluded = excludedOis.concat([oi]);
           fb.innerHTML = '<div class="flex items-center gap-space-sm px-space-md py-space-sm rounded-2xl bg-white/95 shadow-xl text-left max-w-sm mx-auto">' +
-            '<img src="' + fairy.fairyImg + '" alt="' + fairy.fairyName + '" class="w-14 h-14 rounded-full object-cover flex-shrink-0 fairy-float" />' +
+            '<img src="' + fairy.fairyImg + '" alt="' + fairy.fairyName + '" class="w-14 h-14 object-contain flex-shrink-0 fairy-float" />' +
             '<div><p class="font-label-sm text-label-sm text-primary font-bold">' + fairy.fairyName + ' 飛來幫忙！</p>' +
             '<p class="font-body-sm text-body-sm text-on-surface">' + choice.feedback + '</p></div></div>' +
             '<div class="mt-space-sm"><button type="button" id="jungle-retry-btn" class="px-space-lg h-14 rounded-full bg-white text-on-surface font-label-md text-label-md shadow-xl">🔄 再試一次</button></div>';
@@ -1313,6 +1405,7 @@
       switchView(location.hash.replace('#', '') || 'garden');
     }
     refreshDewBadges();
+    renderMotionToggle();
   }
 
   function chooseProfile(id) { enterApp(id); }
