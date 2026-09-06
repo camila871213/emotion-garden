@@ -1255,7 +1255,7 @@
     document.getElementById('jungle-content').innerHTML =
       '<div class="inline-flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-white/25 backdrop-blur-sm text-white font-label-sm text-label-sm mb-space-xs">' + u.icon + ' ' + u.name + '</div>' +
       // 用 div 而不是 button 當作外層容器，才能在裡面放真正可點擊的「上一格」按鈕
-      '<div id="jungle-panel-frame" class="relative w-full max-w-md sm:max-w-xl rounded-2xl border-4 border-white/80 bg-black/25 backdrop-blur-sm shadow-2xl flex flex-col items-center justify-center gap-space-md p-space-xl transition-all active:scale-[0.98] cursor-pointer select-none" style="touch-action: pan-y;">' +
+      '<div id="jungle-panel-frame" class="relative w-full max-w-md sm:max-w-xl rounded-2xl border-4 border-white/80 bg-surface-container shadow-2xl flex flex-col items-center justify-center gap-space-md p-space-xl transition-all active:scale-[0.98] cursor-pointer select-none" style="touch-action: pan-y;">' +
       '<span class="absolute top-4 left-4 px-space-md py-1 rounded-full bg-white/90 text-on-surface font-label-md text-label-md font-bold">' + (junglePanelIndex + 1) + ' / ' + sc.panels.length + '</span>' +
       (tag ? '<span class="absolute top-4 right-4 px-space-md py-1 rounded-full font-label-md text-label-md font-bold" style="background:' + tag.bg + ';color:' + tag.color + ';">' + tag.label + '</span>' : '') +
       visualHtml +
