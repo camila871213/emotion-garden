@@ -1329,8 +1329,8 @@
     var html = '<div class="inline-flex items-center gap-1.5 px-space-md py-1.5 rounded-full bg-white/25 backdrop-blur-sm text-white font-label-md text-label-md mb-space-xs">' + u.icon + ' ' + u.name + '</div>' +
       '<div class="text-[96px] sm:text-[112px] leading-none drop-shadow-lg">' + sc.emoji + '</div>' +
       '<div class="max-w-lg bg-white/95 rounded-xl px-space-lg py-space-md shadow-md"><p class="font-headline-md text-headline-md text-on-surface text-center leading-relaxed">' + sc.scene + '</p></div>' +
-      (sc.cue ? '<p class="font-label-lg text-label-lg text-on-surface bg-white/85 backdrop-blur-sm rounded-full px-space-lg py-1.5 max-w-lg text-center">' + sc.cue + '</p>' : '') +
-      '<p class="font-label-lg text-label-lg text-white/90 drop-shadow -mt-space-sm">' + u.prompt + '</p>' +
+      (sc.cue ? '<div class="max-w-lg bg-white/85 backdrop-blur-sm rounded-xl px-space-lg py-space-sm shadow-md"><p class="font-label-lg text-label-lg text-on-surface text-center leading-relaxed">' + sc.cue + '</p></div>' : '') +
+      '<div class="inline-flex bg-primary rounded-xl px-space-lg py-space-sm shadow-lg"><p class="font-headline-sm text-headline-sm text-on-primary text-center font-bold">❓ ' + u.prompt + '</p></div>' +
       '<div class="flex flex-col sm:flex-row gap-space-md w-full max-w-lg" id="jungle-options">' +
       getOptionOrder(sc).map(function (oi) {
         var o = sc.options[oi];
