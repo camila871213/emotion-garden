@@ -70,7 +70,8 @@
       diaryEntries: [],
       lastEntryDate: null,
       currentMood: null,
-      reducedMotion: false // 感官調節：關閉非必要的動畫效果（草地走動、彈開、閃光、蹦跳登場等）
+      reducedMotion: false, // 感官調節：關閉非必要的動畫效果（草地走動、彈開、閃光、蹦跳登場等）
+      jungleProgress: {} // 叢林冒險每一關的學習紀錄，key 是關卡索引：{ completed, attempts, wrong }
     };
     if (!raw) return defaults;
     try {
@@ -1119,7 +1120,9 @@
   // ============ 叢林冒險（滿版沉浸式，文字僅作輔助，降低認知負荷） ============
   // 三大單元：處己(自我覺察) → 處人(人際互動) → 處環境(環境適應)，各自對應不同的互動設計
   var jungleInitialized = false;
-  var jungleStep = 'entrance'; // 'entrance' | 0..N-1 | 'done'
+  var jungleScreen = 'menu'; // 'menu'(選單元) | 'levels'(選關卡) | 'play'(漫畫/答題)
+  var jungleActiveUnit = null; // 'self' | 'social' | 'env'，在 'levels'/'play' 時有值
+  var jungleActiveIdx = null; // 目前正在玩的關卡在 SCENARIOS 裡的索引，在 'play' 時有值
   var jungleAnswered = false;
 
   var UNITS = {
@@ -1282,24 +1285,51 @@
     }
   });
 
-  // 左上角固定顯示「第幾關＋處己/處人/處環境分類」，不隨畫面（漫畫/答題）切換而跑位
+  var UNIT_KEYS = ['self', 'social', 'env'];
+
+  // 取得某個單元底下所有關卡在 SCENARIOS 裡的索引（依原本陣列順序＝難度順序）
+  function unitIndices(unitKey) {
+    var arr = [];
+    SCENARIOS.forEach(function (sc, i) { if (sc.unit === unitKey) arr.push(i); });
+    return arr;
+  }
+
+  // 讀取／初始化某一關的學習紀錄（每位學生各自存一份，隨 state 一起存進 localStorage）
+  function jungleProg(idx) {
+    if (!state.jungleProgress) state.jungleProgress = {};
+    if (!state.jungleProgress[idx]) state.jungleProgress[idx] = { completed: false, attempts: 0, wrong: 0 };
+    return state.jungleProgress[idx];
+  }
+
+  // 同單元內要按難度順序解鎖：前一關通過才能玩下一關，第一關永遠開放
+  function isScenarioUnlocked(idx) {
+    var indices = unitIndices(SCENARIOS[idx].unit);
+    var pos = indices.indexOf(idx);
+    return pos === 0 || jungleProg(indices[pos - 1]).completed;
+  }
+
+  // 左上角固定顯示「第幾關＋處己/處人/處環境分類」（該單元內的第幾關，不是全部 15 關的總編號）
   function renderJungleLevelBadge(idx) {
     var badge = document.getElementById('jungle-level-badge');
     if (typeof idx !== 'number') { badge.innerHTML = ''; return; }
     var sc = SCENARIOS[idx];
     var u = UNITS[sc.unit];
+    var pos = unitIndices(sc.unit).indexOf(idx) + 1;
     badge.innerHTML = '<div class="inline-flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-white/25 backdrop-blur-sm text-white font-label-sm text-label-sm">' +
       '<span>' + u.icon + ' ' + u.name + '</span>' +
       '<span class="opacity-70">·</span>' +
-      '<span>第 ' + (idx + 1) + ' 關</span></div>';
+      '<span>第 ' + pos + ' 關</span></div>';
   }
 
+  // 進度小圓點：只在實際玩關卡時顯示，範圍是「目前這個單元」而不是全部 15 關
   function renderJungleDots() {
     var dots = document.getElementById('jungle-progress-dots');
-    if (jungleStep === 'entrance') { dots.innerHTML = ''; return; }
-    dots.innerHTML = SCENARIOS.map(function (_, i) {
-      var state = jungleStep === 'done' ? 'done' : (i < jungleStep ? 'done' : (i === jungleStep ? 'current' : 'todo'));
-      var cls = state === 'done' ? 'bg-white w-2.5 h-2.5' : state === 'current' ? 'bg-white w-6 h-2.5' : 'bg-white/40 w-2.5 h-2.5';
+    if (jungleScreen !== 'play' || jungleActiveIdx === null) { dots.innerHTML = ''; return; }
+    var indices = unitIndices(SCENARIOS[jungleActiveIdx].unit);
+    var pos = indices.indexOf(jungleActiveIdx);
+    dots.innerHTML = indices.map(function (gi, i) {
+      var st = jungleProg(gi).completed ? 'done' : (i === pos ? 'current' : 'todo');
+      var cls = st === 'done' ? 'bg-white w-2.5 h-2.5' : st === 'current' ? 'bg-white w-6 h-2.5' : 'bg-white/40 w-2.5 h-2.5';
       return '<span class="rounded-full transition-all ' + cls + '"></span>';
     }).join('');
   }
@@ -1309,34 +1339,80 @@
     tint.className = 'absolute inset-0 ' + (cls || '');
   }
 
-  var jungleUnitIntroShownFor = null;
+  // 單元選單：三個入口（處己／處人／處環境），各自顯示已完成關數
+  function renderJungleMenu() {
+    jungleScreen = 'menu';
+    jungleActiveUnit = null;
+    jungleActiveIdx = null;
+    setJungleTint('bg-black/20');
+    renderJungleLevelBadge();
+    renderJungleDots();
+    var totalDone = UNIT_KEYS.reduce(function (sum, k) {
+      return sum + unitIndices(k).filter(function (gi) { return jungleProg(gi).completed; }).length;
+    }, 0);
+    var allDone = totalDone === SCENARIOS.length;
+    document.getElementById('jungle-content').innerHTML =
+      '<h1 class="font-headline-lg text-headline-lg text-white drop-shadow-lg">叢林冒險</h1>' +
+      '<p class="font-body-md text-body-md text-white/90 drop-shadow">選一個單元開始練習！</p>' +
+      (allDone ? '<div class="inline-flex items-center gap-1.5 px-space-md py-1.5 rounded-full bg-white/90 text-primary font-label-md text-label-md shadow-md">🏆 全部關卡都完成囉！</div>' : '') +
+      '<div class="flex flex-col sm:flex-row gap-space-md w-full max-w-2xl mt-space-sm">' +
+      UNIT_KEYS.map(function (key) {
+        var u = UNITS[key];
+        var indices = unitIndices(key);
+        var done = indices.filter(function (gi) { return jungleProg(gi).completed; }).length;
+        return '<button type="button" data-unit="' + key + '" class="jungle-unit-card flex-1 flex flex-col items-center gap-space-xs px-space-lg py-space-xl rounded-2xl bg-white/95 hover:bg-white shadow-xl transition-all active:scale-95">' +
+          '<span class="text-[48px] leading-none">' + u.icon + '</span>' +
+          '<span class="font-headline-sm text-headline-sm text-on-surface">' + u.name + '</span>' +
+          '<span class="font-body-sm text-body-sm text-on-surface-variant text-center">' + u.sub + '</span>' +
+          '<span class="font-label-md text-label-md text-primary font-bold">' + done + ' / ' + indices.length + ' 已完成</span>' +
+          '</button>';
+      }).join('') + '</div>';
+    document.querySelectorAll('.jungle-unit-card').forEach(function (btn) {
+      btn.addEventListener('click', function () { renderJungleLevels(btn.dataset.unit); });
+    });
+  }
 
-  function renderUnitIntro(unitKey, onContinue) {
+  // 關卡列表：同一單元內依序排列，鎖住尚未解鎖的關卡，已完成的可以重玩練習
+  function renderJungleLevels(unitKey) {
+    jungleScreen = 'levels';
+    jungleActiveUnit = unitKey;
+    jungleActiveIdx = null;
     var u = UNITS[unitKey];
     setJungleTint(u.tint);
     renderJungleLevelBadge();
+    renderJungleDots();
+    var indices = unitIndices(unitKey);
     document.getElementById('jungle-content').innerHTML =
-      '<div class="text-[64px] leading-none drop-shadow-lg">' + u.icon + '</div>' +
+      '<div class="w-full max-w-2xl">' +
+      '<button type="button" id="jungle-back-to-menu" class="inline-flex items-center gap-1 mb-space-sm px-space-md py-1.5 rounded-full bg-white/25 backdrop-blur-sm text-white font-label-sm text-label-sm">' +
+      '<span class="material-symbols-outlined text-[18px]">arrow_back</span>換單元</button>' +
+      '<div class="text-[48px] leading-none drop-shadow-lg">' + u.icon + '</div>' +
       '<h1 class="font-headline-lg text-headline-lg text-white drop-shadow-lg">' + u.name + '</h1>' +
-      '<p class="font-body-md text-body-md text-white/90 drop-shadow">' + u.sub + '</p>' +
-      '<button type="button" id="jungle-unit-continue-btn" class="mt-space-sm px-space-xl h-16 rounded-full bg-primary text-on-primary font-label-lg text-label-lg shadow-2xl active:translate-y-1 transition-all flex items-center gap-space-xs">' +
-      '<span>進入關卡</span><span class="material-symbols-outlined text-[22px]">arrow_forward</span></button>';
-    document.getElementById('jungle-unit-continue-btn').addEventListener('click', onContinue);
+      '<p class="font-body-md text-body-md text-white/90 drop-shadow mb-space-md">' + u.sub + '</p>' +
+      '<div class="grid grid-cols-2 sm:grid-cols-3 gap-space-sm">' +
+      indices.map(function (gi, i) {
+        var prog = jungleProg(gi);
+        var unlocked = isScenarioUnlocked(gi);
+        var stateCls = prog.completed ? 'bg-white text-on-surface' : unlocked ? 'bg-white/90 text-on-surface hover:bg-white active:scale-95' : 'bg-white/30 text-white/70 cursor-not-allowed';
+        return '<button type="button" data-idx="' + gi + '" ' + (unlocked ? '' : 'disabled') + ' class="jungle-level-btn flex flex-col items-center gap-1 px-space-md py-space-lg rounded-xl shadow-lg transition-all ' + stateCls + '">' +
+          '<span class="text-[24px] leading-none">' + (prog.completed ? '✅' : unlocked ? '▶️' : '🔒') + '</span>' +
+          '<span class="font-label-md text-label-md font-bold">第 ' + (i + 1) + ' 關</span>' +
+          (prog.completed ? '<span class="text-[12px]">重玩練習</span>' : '') +
+          '</button>';
+      }).join('') + '</div></div>';
+    document.getElementById('jungle-back-to-menu').addEventListener('click', renderJungleMenu);
+    document.querySelectorAll('.jungle-level-btn:not(:disabled)').forEach(function (btn) {
+      btn.addEventListener('click', function () { startJungleLevel(parseInt(btn.dataset.idx, 10)); });
+    });
   }
 
-  function renderJungleEntrance() {
-    setJungleTint('bg-black/20');
-    renderJungleLevelBadge();
-    document.getElementById('jungle-content').innerHTML =
-      '<h1 class="font-headline-lg text-headline-lg text-white drop-shadow-lg">叢林冒險</h1>' +
-      '<p class="font-body-md text-body-md text-white/90 drop-shadow">選一選，看看會發生什麼！</p>' +
-      '<button type="button" id="jungle-enter-btn" class="mt-space-sm px-space-xl h-16 rounded-full bg-primary text-on-primary font-label-lg text-label-lg shadow-2xl active:translate-y-1 transition-all flex items-center gap-space-xs">' +
-      '<span>踏入叢林</span><span class="material-symbols-outlined text-[22px]">arrow_forward</span></button>';
-    document.getElementById('jungle-enter-btn').addEventListener('click', function () {
-      jungleStep = 0;
-      jungleAnswered = false;
-      renderJungleStep();
-    });
+  function startJungleLevel(idx) {
+    delete SCENARIOS[idx]._order; // 每次進關卡都重新洗牌選項順序，重玩練習時也不會背答案位置
+    jungleScreen = 'play';
+    jungleActiveUnit = SCENARIOS[idx].unit;
+    jungleActiveIdx = idx;
+    jungleAnswered = false;
+    enterScenario(idx);
   }
 
   var junglePanelIndex = 0;
@@ -1360,6 +1436,7 @@
     var canGoBack = junglePanelIndex > 0;
     setJungleTint(u.tint);
     renderJungleLevelBadge(idx);
+    renderJungleDots();
     // panel.tagLabel 可以覆蓋預設標籤文字（例如處己單元把「觀點」顯示成「身體訊號」），顏色still跟著 tag 分類走
     var tag = panel.tag ? { label: panel.tagLabel || STORY_TAGS[panel.tag].label, bg: STORY_TAGS[panel.tag].bg, color: STORY_TAGS[panel.tag].color } : null;
     var visualHtml = panel.svg
@@ -1431,6 +1508,7 @@
     var u = UNITS[sc.unit];
     setJungleTint(u.tint);
     renderJungleLevelBadge(idx);
+    renderJungleDots();
     var html = '<div class="text-[96px] sm:text-[112px] leading-none drop-shadow-lg">' + sc.emoji + '</div>' +
       '<div class="max-w-lg bg-white/95 rounded-xl px-space-lg py-space-md shadow-md"><p class="font-headline-md text-headline-md text-on-surface text-center leading-relaxed">' + sc.scene + '</p></div>' +
       (sc.cue ? '<div class="max-w-lg bg-white/85 backdrop-blur-sm rounded-xl px-space-lg py-space-sm shadow-md"><p class="font-label-lg text-label-lg text-on-surface text-center leading-relaxed">' + sc.cue + '</p></div>' : '') +
@@ -1454,6 +1532,8 @@
         jungleAnswered = true;
         var oi = parseInt(btn.dataset.oi, 10);
         var choice = sc.options[oi];
+        var prog = jungleProg(idx);
+        prog.attempts += 1;
         document.querySelectorAll('.jungle-opt').forEach(function (b) { b.classList.add('opacity-50'); });
         btn.classList.remove('opacity-50');
         btn.classList.add('ring-4', choice.correct ? 'ring-primary' : 'ring-outline');
@@ -1461,16 +1541,29 @@
         var fb = document.getElementById('jungle-feedback');
 
         if (choice.correct) {
+          prog.completed = true;
+          saveState();
+          var indices = unitIndices(sc.unit);
+          var pos = indices.indexOf(idx);
+          var nextIdx = pos < indices.length - 1 ? indices[pos + 1] : null;
           fb.innerHTML = '<div class="inline-flex items-center gap-space-xs px-space-md py-space-sm rounded-full bg-white/95 shadow-xl">' +
             '<span class="font-label-md text-label-md text-on-surface">' + choice.feedback + '</span></div>' +
-            '<div class="mt-space-sm"><button type="button" id="jungle-next-btn" class="px-space-lg h-14 rounded-full bg-primary text-on-primary font-label-md text-label-md shadow-xl">' +
-            (idx === SCENARIOS.length - 1 ? '完成冒險 🎉' : '下一關 →') + '</button></div>';
+            '<div class="mt-space-sm flex flex-col items-center gap-space-xs">' +
+            '<button type="button" id="jungle-next-btn" class="px-space-lg h-14 rounded-full bg-primary text-on-primary font-label-md text-label-md shadow-xl">' +
+            (nextIdx !== null ? '下一關 →' : '🎉 完成單元') + '</button>' +
+            '<button type="button" id="jungle-back-list-btn" class="font-label-sm text-label-sm text-white/90 underline underline-offset-2">回關卡列表</button>' +
+            '</div>';
           document.getElementById('jungle-next-btn').addEventListener('click', function () {
-            if (idx === SCENARIOS.length - 1) { jungleStep = 'done'; } else { jungleStep = idx + 1; }
             jungleAnswered = false;
-            renderJungleStep();
+            if (nextIdx !== null) { startJungleLevel(nextIdx); } else { renderJungleLevels(sc.unit); }
+          });
+          document.getElementById('jungle-back-list-btn').addEventListener('click', function () {
+            jungleAnswered = false;
+            renderJungleLevels(sc.unit);
           });
         } else {
+          prog.wrong += 1;
+          saveState();
           // 花仙子組隊出動助攻：排除這個答錯的選項，縮小範圍幫學生再試一次
           var fairy = pickAssistFairy();
           var nextExcluded = excludedOis.concat([oi]);
@@ -1488,21 +1581,6 @@
     });
   }
 
-  function renderJungleDone() {
-    setJungleTint('bg-primary/30');
-    renderJungleLevelBadge();
-    document.getElementById('jungle-content').innerHTML =
-      '<div class="text-[64px] leading-none">🏆</div>' +
-      '<h1 class="font-headline-lg text-headline-lg text-white drop-shadow-lg">完成叢林冒險！</h1>' +
-      '<button type="button" id="jungle-restart-btn" class="mt-space-sm px-space-xl h-16 rounded-full bg-primary text-on-primary font-label-lg text-label-lg shadow-2xl">🔄 再玩一次</button>';
-    document.getElementById('jungle-restart-btn').addEventListener('click', function () {
-      jungleStep = 0;
-      jungleAnswered = false;
-      SCENARIOS.forEach(function (sc) { delete sc._order; }); // 重玩時重新洗牌選項順序
-      renderJungleStep();
-    });
-  }
-
   function enterScenario(idx) {
     junglePanelIndex = 0;
     if (SCENARIOS[idx].panels && SCENARIOS[idx].panels.length) {
@@ -1512,27 +1590,9 @@
     }
   }
 
-  function renderJungleStep() {
-    renderJungleDots();
-    if (jungleStep === 'entrance') { renderJungleEntrance(); return; }
-    if (jungleStep === 'done') { renderJungleDone(); return; }
-    var sc = SCENARIOS[jungleStep];
-    var isFirstOfUnit = jungleStep === 0 || SCENARIOS[jungleStep - 1].unit !== sc.unit;
-    if (isFirstOfUnit && jungleUnitIntroShownFor !== sc.unit) {
-      renderUnitIntro(sc.unit, function () {
-        jungleUnitIntroShownFor = sc.unit;
-        enterScenario(jungleStep);
-      });
-    } else {
-      enterScenario(jungleStep);
-    }
-  }
-
   function initJungle() {
     jungleInitialized = true;
-    jungleStep = 'entrance';
-    jungleUnitIntroShownFor = null;
-    renderJungleStep();
+    renderJungleMenu();
   }
 
   // ---------- 使用者選擇畫面 ----------
@@ -1573,6 +1633,7 @@
     state = loadState(id);
     setActiveProfileId(id);
     meadowInitialized = false; // 換了使用者，花園居民要換成這位小朋友自己解鎖的仙子
+    jungleInitialized = false; // 換了使用者，叢林冒險要換成這位小朋友自己的關卡進度
     document.getElementById('profile-gate').hidden = true;
     document.getElementById('app-shell').hidden = false;
     var p = loadProfiles().filter(function (x) { return x.id === id; })[0];
@@ -1631,6 +1692,35 @@
     setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
   }
 
+  // 統計某位學生的叢林冒險學習成效：各單元完成關數、累計答題/錯誤次數、錯誤率
+  function computeJungleStats(st) {
+    var prog = st.jungleProgress || {};
+    var perUnit = {};
+    var totalDone = 0, totalAttempts = 0, totalWrong = 0;
+    UNIT_KEYS.forEach(function (key) {
+      var indices = unitIndices(key);
+      var done = 0, attempts = 0, wrong = 0;
+      indices.forEach(function (gi) {
+        var p = prog[gi];
+        if (p) {
+          if (p.completed) done++;
+          attempts += p.attempts || 0;
+          wrong += p.wrong || 0;
+        }
+      });
+      perUnit[key] = { done: done, total: indices.length, attempts: attempts, wrong: wrong };
+      totalDone += done; totalAttempts += attempts; totalWrong += wrong;
+    });
+    return {
+      perUnit: perUnit,
+      totalDone: totalDone,
+      totalScenarios: SCENARIOS.length,
+      totalAttempts: totalAttempts,
+      totalWrong: totalWrong,
+      errorRate: totalAttempts ? Math.round(totalWrong / totalAttempts * 100) : 0
+    };
+  }
+
   function exportAllStudentData() {
     var profiles = loadProfiles();
     if (!profiles.length) {
@@ -1641,6 +1731,9 @@
     var fullBackup = { exportedAt: new Date().toISOString(), profiles: [] };
     var diaryRows = [['學生姓名', '日期', '心情', '日記內容', '獲得水滴']];
     var summaryRows = [['學生姓名', '目前盆栽階段(0-6)', '目前甘露庫存', '已解鎖仙子數(共5)', '累計孵化次數', '日記篇數', '建立日期']];
+    var jungleRows = [['學生姓名', '總完成關卡(共' + SCENARIOS.length + ')'].concat(
+      UNIT_KEYS.map(function (k) { return UNITS[k].name + '完成'; })
+    ).concat(['累計答題次數', '累計錯誤次數', '錯誤率(%)'])];
 
     profiles.forEach(function (p) {
       var st = loadState(p.id);
@@ -1650,10 +1743,16 @@
         diaryRows.push([p.name, e.date, moodLabel, e.text || '', e.drops]);
       });
       summaryRows.push([p.name, st.growthStage, st.waterInventory, st.unlockedFairies.length, st.harvestCount, st.diaryEntries.length, p.createdAt]);
+      var js = computeJungleStats(st);
+      jungleRows.push([p.name, js.totalDone + '/' + js.totalScenarios].concat(
+        UNIT_KEYS.map(function (k) { return js.perUnit[k].done + '/' + js.perUnit[k].total; })
+      ).concat([js.totalAttempts, js.totalWrong, js.errorRate]));
     });
 
-    var diaryCsv = '﻿' + diaryRows.concat(summaryRows.length ? [[], ['— 學生總覽 —']].concat(summaryRows) : [])
-      .map(function (row) { return row.map(csvEscape).join(','); }).join('\r\n');
+    var sections = diaryRows
+      .concat(summaryRows.length ? [[], ['— 學生總覽 —']].concat(summaryRows) : [])
+      .concat(jungleRows.length > 1 ? [[], ['— 叢林學習成效 —']].concat(jungleRows) : []);
+    var diaryCsv = '﻿' + sections.map(function (row) { return row.map(csvEscape).join(','); }).join('\r\n');
 
     downloadBlob('心靈植癒園_學生資料_' + today + '.csv', 'text/csv', diaryCsv);
     setTimeout(function () {
@@ -1665,14 +1764,111 @@
       '<span class="material-symbols-outlined text-primary" style="font-size:48px;">download_done</span>' +
       '<h2 class="font-headline-sm text-headline-sm text-primary">已匯出 ' + profiles.length + ' 位學生的資料</h2>' +
       '<p class="font-body-sm text-body-sm text-on-surface-variant text-left">下載了兩個檔案：<br>' +
-      '・CSV(可用 Excel 開啟，含日記內容與總覽)<br>' +
+      '・CSV(可用 Excel 開啟，含日記內容、總覽與叢林學習成效)<br>' +
       '・JSON(完整備份，供之後還原用)</p>' +
       '<button class="w-full h-12 rounded-full bg-primary text-on-primary font-label-md text-label-md" onclick="closeModal()">好的</button>' +
       '</div>'
     );
   }
 
-  document.getElementById('teacher-export-btn').addEventListener('click', exportAllStudentData);
+  function renderTeacherDashboard() {
+    var profiles = loadProfiles();
+    if (!profiles.length) {
+      showModal('<div class="text-center space-y-space-md"><p class="font-body-md text-body-md text-on-surface">目前還沒有任何學生資料。</p><button class="w-full h-12 rounded-full bg-primary text-on-primary font-label-md text-label-md" onclick="closeModal()">好的</button></div>');
+      return;
+    }
+    var rows = profiles.map(function (p) {
+      var st = loadState(p.id);
+      var s = computeJungleStats(st);
+      return '<tr class="border-b border-outline-variant">' +
+        '<td class="py-space-xs px-space-sm text-left whitespace-nowrap">' + p.avatar + ' ' + escapeHtml(p.name) + '</td>' +
+        '<td class="py-space-xs px-space-sm text-center">' + s.totalDone + '/' + s.totalScenarios + '</td>' +
+        UNIT_KEYS.map(function (k) { return '<td class="py-space-xs px-space-sm text-center">' + s.perUnit[k].done + '/' + s.perUnit[k].total + '</td>'; }).join('') +
+        '<td class="py-space-xs px-space-sm text-center">' + s.totalAttempts + '</td>' +
+        '<td class="py-space-xs px-space-sm text-center">' + s.totalWrong + '</td>' +
+        '<td class="py-space-xs px-space-sm text-center font-bold ' + (s.errorRate >= 50 ? 'text-error' : 'text-on-surface') + '">' + s.errorRate + '%</td>' +
+        '</tr>';
+    }).join('');
+    showModal(
+      '<div class="space-y-space-md">' +
+      '<h2 class="font-headline-sm text-headline-sm text-primary text-center">📊 學生叢林學習成效</h2>' +
+      '<div class="overflow-x-auto"><table class="w-full" style="border-collapse:collapse;min-width:520px;">' +
+      '<thead><tr class="border-b-2 border-primary font-label-sm text-label-sm text-on-surface">' +
+      '<th class="py-space-xs px-space-sm text-left">學生</th>' +
+      '<th class="py-space-xs px-space-sm">總完成</th>' +
+      UNIT_KEYS.map(function (k) { return '<th class="py-space-xs px-space-sm">' + UNITS[k].name + '</th>'; }).join('') +
+      '<th class="py-space-xs px-space-sm">答題次數</th>' +
+      '<th class="py-space-xs px-space-sm">錯誤次數</th>' +
+      '<th class="py-space-xs px-space-sm">錯誤率</th>' +
+      '</tr></thead><tbody class="font-body-sm text-body-sm text-on-surface">' + rows + '</tbody></table></div>' +
+      '<p class="font-label-sm text-label-sm text-on-surface-variant text-center">錯誤率＝累計答錯次數 ÷ 累計作答次數（含重玩練習）</p>' +
+      '<button type="button" class="w-full h-12 rounded-full bg-primary text-on-primary font-label-md text-label-md" onclick="closeModal()">關閉</button>' +
+      '</div>'
+    );
+  }
+
+  // 老師專用密碼鎖：避免學生在共用平板上誤按進入老師工具。第一次使用時設定密碼，之後每次都要輸入才能進入。
+  var TEACHER_PIN_KEY = 'eg_teacher_pin_v1';
+
+  function renderTeacherMenu() {
+    showModal(
+      '<div class="text-center space-y-space-md">' +
+      '<h2 class="font-headline-sm text-headline-sm text-primary">🔒 老師專用工具</h2>' +
+      '<button type="button" id="teacher-menu-dashboard-btn" class="w-full h-14 rounded-full bg-primary text-on-primary font-label-md text-label-md">📊 查看學生學習成效</button>' +
+      '<button type="button" id="teacher-menu-export-btn" class="w-full h-14 rounded-full bg-surface-container text-on-surface font-label-md text-label-md">📥 匯出所有學生資料</button>' +
+      '</div>'
+    );
+    document.getElementById('teacher-menu-dashboard-btn').addEventListener('click', renderTeacherDashboard);
+    document.getElementById('teacher-menu-export-btn').addEventListener('click', exportAllStudentData);
+  }
+
+  function openTeacherArea() {
+    var pin = localStorage.getItem(TEACHER_PIN_KEY);
+    if (!pin) {
+      showModal(
+        '<div class="text-center space-y-space-md">' +
+        '<h2 class="font-headline-sm text-headline-sm text-primary">🔒 設定老師專用密碼</h2>' +
+        '<p class="font-body-sm text-body-sm text-on-surface-variant">第一次使用，請設定 4 位數密碼，之後開啟老師工具都需要輸入，避免學生誤按。</p>' +
+        '<input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="teacher-pin-set-input" class="w-full h-14 px-space-md rounded-lg bg-surface-container-low text-center font-body-lg text-body-lg tracking-[0.5em] outline-none focus:ring-2 focus:ring-primary" placeholder="****" />' +
+        '<p id="teacher-pin-set-err" class="font-label-sm text-label-sm text-error hidden">請輸入 4 位數字</p>' +
+        '<button type="button" id="teacher-pin-set-btn" class="w-full h-12 rounded-full bg-primary text-on-primary font-label-md text-label-md">設定完成</button>' +
+        '</div>'
+      );
+      var setInput = document.getElementById('teacher-pin-set-input');
+      setInput.focus();
+      function submitSet() {
+        var v = setInput.value.trim();
+        if (!/^\d{4}$/.test(v)) { document.getElementById('teacher-pin-set-err').classList.remove('hidden'); return; }
+        localStorage.setItem(TEACHER_PIN_KEY, v);
+        renderTeacherMenu();
+      }
+      document.getElementById('teacher-pin-set-btn').addEventListener('click', submitSet);
+      setInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') submitSet(); });
+      return;
+    }
+    showModal(
+      '<div class="text-center space-y-space-md">' +
+      '<h2 class="font-headline-sm text-headline-sm text-primary">🔒 老師專用</h2>' +
+      '<p class="font-body-sm text-body-sm text-on-surface-variant">請輸入密碼</p>' +
+      '<input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="teacher-pin-input" class="w-full h-14 px-space-md rounded-lg bg-surface-container-low text-center font-body-lg text-body-lg tracking-[0.5em] outline-none focus:ring-2 focus:ring-primary" placeholder="****" />' +
+      '<p id="teacher-pin-err" class="font-label-sm text-label-sm text-error hidden">密碼不對，再試一次</p>' +
+      '<button type="button" id="teacher-pin-submit-btn" class="w-full h-12 rounded-full bg-primary text-on-primary font-label-md text-label-md">進入</button>' +
+      '</div>'
+    );
+    var pinInput = document.getElementById('teacher-pin-input');
+    pinInput.focus();
+    function submitCheck() {
+      if (pinInput.value.trim() === pin) { renderTeacherMenu(); } else {
+        document.getElementById('teacher-pin-err').classList.remove('hidden');
+        pinInput.value = '';
+        pinInput.focus();
+      }
+    }
+    document.getElementById('teacher-pin-submit-btn').addEventListener('click', submitCheck);
+    pinInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') submitCheck(); });
+  }
+
+  document.getElementById('teacher-area-btn').addEventListener('click', openTeacherArea);
 
   // ---------- 啟動 ----------
   window.__switchView = switchView;
