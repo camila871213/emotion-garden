@@ -1608,8 +1608,116 @@
         '</button>';
     }).join('');
     list.querySelectorAll('.profile-card').forEach(function (btn) {
-      btn.addEventListener('click', function () { chooseProfile(btn.dataset.id); });
+      btn.addEventListener('click', function () {
+        var profile = profiles.filter(function (x) { return x.id === btn.dataset.id; })[0];
+        if (profile) requestProfileLogin(profile);
+      });
     });
+  }
+
+  // 學生登入密碼：共用平板上避免誤點/亂點進到別的小朋友的資料。沒設過密碼的舊資料，登入時先請他設定一個。
+  function requestProfileLogin(p) {
+    if (!p.pin) {
+      showModal(
+        '<div class="text-center space-y-space-md">' +
+        '<span class="text-[40px] leading-none">' + p.avatar + '</span>' +
+        '<h2 class="font-headline-sm text-headline-sm text-primary">' + escapeHtml(p.name) + '，請先設定密碼</h2>' +
+        '<p class="font-body-sm text-body-sm text-on-surface-variant">設定 4 位數密碼，下次登入要用喔！</p>' +
+        '<input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="profile-pin-set-input" class="w-full h-14 px-space-md rounded-lg bg-surface-container-low text-center font-body-lg text-body-lg tracking-[0.5em] outline-none focus:ring-2 focus:ring-primary" placeholder="****" />' +
+        '<p id="profile-pin-set-err" class="font-label-sm text-label-sm text-error hidden">請輸入 4 位數字</p>' +
+        '<button type="button" id="profile-pin-set-btn" class="w-full h-12 rounded-full bg-primary text-on-primary font-label-md text-label-md">設定完成，開始！</button>' +
+        '</div>'
+      );
+      var setInput = document.getElementById('profile-pin-set-input');
+      setInput.focus();
+      function submitSet() {
+        var v = setInput.value.trim();
+        if (!/^\d{4}$/.test(v)) { document.getElementById('profile-pin-set-err').classList.remove('hidden'); return; }
+        var profiles = loadProfiles();
+        var target = profiles.filter(function (x) { return x.id === p.id; })[0];
+        if (target) { target.pin = v; saveProfiles(profiles); }
+        chooseProfile(p.id);
+      }
+      document.getElementById('profile-pin-set-btn').addEventListener('click', submitSet);
+      setInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') submitSet(); });
+      return;
+    }
+    showModal(
+      '<div class="text-center space-y-space-md">' +
+      '<span class="text-[40px] leading-none">' + p.avatar + '</span>' +
+      '<h2 class="font-headline-sm text-headline-sm text-primary">' + escapeHtml(p.name) + '</h2>' +
+      '<p class="font-body-sm text-body-sm text-on-surface-variant">請輸入你的密碼</p>' +
+      '<input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="profile-pin-check-input" class="w-full h-14 px-space-md rounded-lg bg-surface-container-low text-center font-body-lg text-body-lg tracking-[0.5em] outline-none focus:ring-2 focus:ring-primary" placeholder="****" />' +
+      '<p id="profile-pin-check-err" class="font-label-sm text-label-sm text-error hidden">密碼不對，再試一次</p>' +
+      '<button type="button" id="profile-pin-check-btn" class="w-full h-12 rounded-full bg-primary text-on-primary font-label-md text-label-md">登入</button>' +
+      '<button type="button" id="profile-pin-forgot-btn" class="font-label-sm text-label-sm text-on-surface-variant underline underline-offset-2">忘記密碼？請老師協助</button>' +
+      '</div>'
+    );
+    var checkInput = document.getElementById('profile-pin-check-input');
+    checkInput.focus();
+    function submitCheck() {
+      if (checkInput.value.trim() === p.pin) { chooseProfile(p.id); }
+      else {
+        document.getElementById('profile-pin-check-err').classList.remove('hidden');
+        checkInput.value = '';
+        checkInput.focus();
+      }
+    }
+    document.getElementById('profile-pin-check-btn').addEventListener('click', submitCheck);
+    checkInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') submitCheck(); });
+    document.getElementById('profile-pin-forgot-btn').addEventListener('click', function () {
+      requestTeacherResetForProfile(p);
+    });
+  }
+
+  // 忘記密碼時，讓老師用自己的密碼驗證身分後，幫這位小朋友重設一組新密碼
+  function requestTeacherResetForProfile(p) {
+    var teacherPin = localStorage.getItem(TEACHER_PIN_KEY);
+    if (!teacherPin) {
+      showModal('<div class="text-center space-y-space-md"><p class="font-body-md text-body-md text-on-surface">老師還沒設定過老師密碼，請老師先點「🔒 老師專用」設定一次，才能協助重設學生密碼。</p><button class="w-full h-12 rounded-full bg-primary text-on-primary font-label-md text-label-md" onclick="closeModal()">好的</button></div>');
+      return;
+    }
+    showModal(
+      '<div class="text-center space-y-space-md">' +
+      '<h2 class="font-headline-sm text-headline-sm text-primary">🔒 老師協助重設密碼</h2>' +
+      '<p class="font-body-sm text-body-sm text-on-surface-variant">請老師輸入老師密碼，確認後可以幫「' + escapeHtml(p.name) + '」設定新密碼。</p>' +
+      '<input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="teacher-reset-verify-input" class="w-full h-14 px-space-md rounded-lg bg-surface-container-low text-center font-body-lg text-body-lg tracking-[0.5em] outline-none focus:ring-2 focus:ring-primary" placeholder="****" />' +
+      '<p id="teacher-reset-verify-err" class="font-label-sm text-label-sm text-error hidden">密碼不對，再試一次</p>' +
+      '<button type="button" id="teacher-reset-verify-btn" class="w-full h-12 rounded-full bg-primary text-on-primary font-label-md text-label-md">確認</button>' +
+      '</div>'
+    );
+    var verifyInput = document.getElementById('teacher-reset-verify-input');
+    verifyInput.focus();
+    function submitVerify() {
+      if (verifyInput.value.trim() !== teacherPin) {
+        document.getElementById('teacher-reset-verify-err').classList.remove('hidden');
+        verifyInput.value = '';
+        verifyInput.focus();
+        return;
+      }
+      showModal(
+        '<div class="text-center space-y-space-md">' +
+        '<h2 class="font-headline-sm text-headline-sm text-primary">為「' + escapeHtml(p.name) + '」設定新密碼</h2>' +
+        '<input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="teacher-reset-new-input" class="w-full h-14 px-space-md rounded-lg bg-surface-container-low text-center font-body-lg text-body-lg tracking-[0.5em] outline-none focus:ring-2 focus:ring-primary" placeholder="****" />' +
+        '<p id="teacher-reset-new-err" class="font-label-sm text-label-sm text-error hidden">請輸入 4 位數字</p>' +
+        '<button type="button" id="teacher-reset-new-btn" class="w-full h-12 rounded-full bg-primary text-on-primary font-label-md text-label-md">設定並登入</button>' +
+        '</div>'
+      );
+      var newInput = document.getElementById('teacher-reset-new-input');
+      newInput.focus();
+      function submitNew() {
+        var v = newInput.value.trim();
+        if (!/^\d{4}$/.test(v)) { document.getElementById('teacher-reset-new-err').classList.remove('hidden'); return; }
+        var profiles = loadProfiles();
+        var target = profiles.filter(function (x) { return x.id === p.id; })[0];
+        if (target) { target.pin = v; saveProfiles(profiles); }
+        chooseProfile(p.id);
+      }
+      document.getElementById('teacher-reset-new-btn').addEventListener('click', submitNew);
+      newInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') submitNew(); });
+    }
+    document.getElementById('teacher-reset-verify-btn').addEventListener('click', submitVerify);
+    verifyInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') submitVerify(); });
   }
 
   function renderAvatarPicker() {
@@ -1658,12 +1766,18 @@
     var nameInput = document.getElementById('profile-name-input');
     var name = nameInput.value.trim();
     if (!name) { nameInput.focus(); return; }
+    var pinInput = document.getElementById('profile-pin-input');
+    var pin = pinInput.value.trim();
+    var pinErr = document.getElementById('profile-pin-err');
+    if (!/^\d{4}$/.test(pin)) { pinErr.classList.remove('hidden'); pinInput.focus(); return; }
+    pinErr.classList.add('hidden');
     var avatar = document.getElementById('profile-avatar-picker').dataset.selected || AVATAR_CHOICES[0];
     var profiles = loadProfiles();
     var id = 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
-    profiles.push({ id: id, name: name, avatar: avatar, createdAt: todayStr() });
+    profiles.push({ id: id, name: name, avatar: avatar, createdAt: todayStr(), pin: pin });
     saveProfiles(profiles);
     nameInput.value = '';
+    pinInput.value = '';
     chooseProfile(id);
   });
 
