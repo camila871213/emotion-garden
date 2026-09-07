@@ -1282,6 +1282,18 @@
     }
   });
 
+  // 左上角固定顯示「第幾關＋處己/處人/處環境分類」，不隨畫面（漫畫/答題）切換而跑位
+  function renderJungleLevelBadge(idx) {
+    var badge = document.getElementById('jungle-level-badge');
+    if (typeof idx !== 'number') { badge.innerHTML = ''; return; }
+    var sc = SCENARIOS[idx];
+    var u = UNITS[sc.unit];
+    badge.innerHTML = '<div class="inline-flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-white/25 backdrop-blur-sm text-white font-label-sm text-label-sm">' +
+      '<span>' + u.icon + ' ' + u.name + '</span>' +
+      '<span class="opacity-70">·</span>' +
+      '<span>第 ' + (idx + 1) + ' 關</span></div>';
+  }
+
   function renderJungleDots() {
     var dots = document.getElementById('jungle-progress-dots');
     if (jungleStep === 'entrance') { dots.innerHTML = ''; return; }
@@ -1302,6 +1314,7 @@
   function renderUnitIntro(unitKey, onContinue) {
     var u = UNITS[unitKey];
     setJungleTint(u.tint);
+    renderJungleLevelBadge();
     document.getElementById('jungle-content').innerHTML =
       '<div class="text-[64px] leading-none drop-shadow-lg">' + u.icon + '</div>' +
       '<h1 class="font-headline-lg text-headline-lg text-white drop-shadow-lg">' + u.name + '</h1>' +
@@ -1313,6 +1326,7 @@
 
   function renderJungleEntrance() {
     setJungleTint('bg-black/20');
+    renderJungleLevelBadge();
     document.getElementById('jungle-content').innerHTML =
       '<h1 class="font-headline-lg text-headline-lg text-white drop-shadow-lg">叢林冒險</h1>' +
       '<p class="font-body-md text-body-md text-white/90 drop-shadow">選一選，看看會發生什麼！</p>' +
@@ -1345,13 +1359,13 @@
     var isLast = junglePanelIndex === sc.panels.length - 1;
     var canGoBack = junglePanelIndex > 0;
     setJungleTint(u.tint);
+    renderJungleLevelBadge(idx);
     // panel.tagLabel 可以覆蓋預設標籤文字（例如處己單元把「觀點」顯示成「身體訊號」），顏色still跟著 tag 分類走
     var tag = panel.tag ? { label: panel.tagLabel || STORY_TAGS[panel.tag].label, bg: STORY_TAGS[panel.tag].bg, color: STORY_TAGS[panel.tag].color } : null;
     var visualHtml = panel.svg
       ? '<div class="panel-svg-wrap w-48 sm:w-60 h-48 sm:h-60 rounded-xl bg-white flex items-center justify-center overflow-hidden p-space-sm shadow-md">' + panel.svg + '</div>'
       : '<span class="text-[56px] sm:text-[72px] leading-tight text-center max-w-full px-space-sm drop-shadow-lg">' + panel.emoji + '</span>';
     document.getElementById('jungle-content').innerHTML =
-      '<div class="inline-flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-white/25 backdrop-blur-sm text-white font-label-sm text-label-sm mb-space-xs">' + u.icon + ' ' + u.name + '</div>' +
       // 用 div 而不是 button 當作外層容器，才能在裡面放真正可點擊的「上一格」按鈕
       '<div id="jungle-panel-frame" class="relative w-full max-w-md sm:max-w-xl rounded-2xl border-4 border-white/80 bg-surface-container shadow-2xl flex flex-col items-center justify-center gap-space-md p-space-xl transition-all active:scale-[0.98] cursor-pointer select-none" style="touch-action: pan-y;">' +
       '<span class="absolute top-4 left-4 px-space-md py-1 rounded-full bg-white/90 text-on-surface font-label-md text-label-md font-bold">' + (junglePanelIndex + 1) + ' / ' + sc.panels.length + '</span>' +
@@ -1416,8 +1430,8 @@
     var sc = SCENARIOS[idx];
     var u = UNITS[sc.unit];
     setJungleTint(u.tint);
-    var html = '<div class="inline-flex items-center gap-1.5 px-space-md py-1.5 rounded-full bg-white/25 backdrop-blur-sm text-white font-label-md text-label-md mb-space-xs">' + u.icon + ' ' + u.name + '</div>' +
-      '<div class="text-[96px] sm:text-[112px] leading-none drop-shadow-lg">' + sc.emoji + '</div>' +
+    renderJungleLevelBadge(idx);
+    var html = '<div class="text-[96px] sm:text-[112px] leading-none drop-shadow-lg">' + sc.emoji + '</div>' +
       '<div class="max-w-lg bg-white/95 rounded-xl px-space-lg py-space-md shadow-md"><p class="font-headline-md text-headline-md text-on-surface text-center leading-relaxed">' + sc.scene + '</p></div>' +
       (sc.cue ? '<div class="max-w-lg bg-white/85 backdrop-blur-sm rounded-xl px-space-lg py-space-sm shadow-md"><p class="font-label-lg text-label-lg text-on-surface text-center leading-relaxed">' + sc.cue + '</p></div>' : '') +
       '<div class="inline-flex bg-primary rounded-xl px-space-lg py-space-sm shadow-lg"><p class="font-headline-sm text-headline-sm text-on-primary text-center font-bold">❓ ' + u.prompt + '</p></div>' +
@@ -1476,6 +1490,7 @@
 
   function renderJungleDone() {
     setJungleTint('bg-primary/30');
+    renderJungleLevelBadge();
     document.getElementById('jungle-content').innerHTML =
       '<div class="text-[64px] leading-none">🏆</div>' +
       '<h1 class="font-headline-lg text-headline-lg text-white drop-shadow-lg">完成叢林冒險！</h1>' +
