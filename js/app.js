@@ -1093,10 +1093,8 @@
     document.querySelectorAll('.lib-tab-btn').forEach(function (btn) {
       var active = btn.dataset.id === id;
       btn.classList.toggle('bg-primary', active);
-      btn.classList.toggle('text-on-primary', active);
       btn.classList.toggle('shadow-md', active);
       btn.classList.toggle('bg-surface-container-low', !active);
-      btn.classList.toggle('text-on-surface', !active);
     });
   }
 
@@ -1104,11 +1102,9 @@
     libInitialized = true;
     var tabs = document.getElementById('lib-fruit-tabs');
     tabs.innerHTML = FRUITS.map(function (f, i) {
-      return '<button type="button" data-id="' + f.id + '" class="lib-tab-btn flex flex-col items-center p-space-xs rounded-xl transition-all duration-200 text-center ' +
-        (i === 0 ? 'bg-primary text-on-primary shadow-md' : 'bg-surface-container-low text-on-surface') + '">' +
-        '<img src="' + f.img + '" alt="" class="w-9 h-9 rounded-full object-cover shadow-sm" />' +
-        '<span class="font-label-sm text-label-sm font-bold leading-tight mt-space-xxs">' + f.short.split(' · ')[1] + '</span>' +
-        '<span class="text-[12px] opacity-80">' + f.emotion + '</span>' +
+      return '<button type="button" data-id="' + f.id + '" aria-label="' + f.name + '（' + f.emotion + '）" class="lib-tab-btn flex items-center justify-center p-space-sm rounded-xl transition-all duration-200 ' +
+        (i === 0 ? 'bg-primary shadow-md' : 'bg-surface-container-low') + '">' +
+        '<img src="' + f.img + '" alt="' + f.emotion + '" class="w-14 h-14 object-contain drop-shadow-sm" />' +
         '</button>';
     }).join('');
     tabs.querySelectorAll('.lib-tab-btn').forEach(function (btn) {
