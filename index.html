@@ -473,10 +473,10 @@ tailwind.config={darkMode:"class",theme:{extend:{
 
   <!-- ============ 6. 叢林冒險（滿版沉浸式，文字僅作輔助） ============ -->
   <section class="view" data-view="jungle" id="view-jungle" hidden>
-    <div class="relative w-full overflow-hidden bg-black" style="height: calc(100vh - 9rem); min-height: 560px;" id="jungle-stage">
-      <!-- 背景圖層 -->
+    <div class="relative w-full overflow-hidden bg-gradient-to-b from-[#1e3a2b] to-[#0f2016]" style="height: calc(100vh - 9rem); min-height: 560px;" id="jungle-stage">
+      <!-- 背景圖層：原本這裡是 Stitch 匯出時給的 Google 暫存圖片連結，現在連結已失效(403)，先用深綠漸層當保底背景，避免變全黑；img 保留 onerror 隱藏避免顯示壞圖示 -->
       <div class="absolute inset-0 w-full h-full overflow-hidden">
-        <img id="jungle-bg-img" alt="" class="w-full h-full object-cover transition-all duration-700" src="https://lh3.googleusercontent.com/aida/AEtjO1WRsX8yZM3r7dtxXDElvokKqRRmAcAvgGHHW3tp82Ucg1HPOjI3B3b1Rb4710M_w4j38MCP3uIAMCn5Ups9OzBVhYIqEOpq_ksdb7MBJtw3iPc8IR9_m_ul6lFKvHBNRte3HUrIcvqe3ZXudromJrePXiP9hfBnbwEsoY-7ztw6XZBzHzp_uTNBwaiwWbmRwYPkxN-9aIW8UWrw2ylCba0OpphIimnRHMFH4cPooM99pSFhb1hYtSpkxag"/>
+        <img id="jungle-bg-img" alt="" onerror="this.style.display='none'" class="w-full h-full object-cover transition-all duration-700" src="https://lh3.googleusercontent.com/aida/AEtjO1WRsX8yZM3r7dtxXDElvokKqRRmAcAvgGHHW3tp82Ucg1HPOjI3B3b1Rb4710M_w4j38MCP3uIAMCn5Ups9OzBVhYIqEOpq_ksdb7MBJtw3iPc8IR9_m_ul6lFKvHBNRte3HUrIcvqe3ZXudromJrePXiP9hfBnbwEsoY-7ztw6XZBzHzp_uTNBwaiwWbmRwYPkxN-9aIW8UWrw2ylCba0OpphIimnRHMFH4cPooM99pSFhb1hYtSpkxag"/>
         <div class="absolute inset-0" id="jungle-tint"></div>
         <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-black/40"></div>
       </div>
