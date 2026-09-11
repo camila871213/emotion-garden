@@ -42,6 +42,46 @@
   var PROFILES_KEY = 'eg_profiles_v1';
   var ACTIVE_PROFILE_KEY = 'eg_active_profile_v1';
   var AVATAR_CHOICES = ['🌻', '🌵', '🪻', '🍀', '💜'];
+  var DIFFICULTY_CHOICES = [
+    { id: 'easy', icon: '🌱', label: '簡單' },
+    { id: 'medium', icon: '🌿', label: '中等' },
+    { id: 'hard', icon: '🌳', label: '困難' }
+  ];
+
+  // 簡單／中等難度共用同一份簡化內容（語音+圖片/影片），差別只在字幕要不要顯示在畫面上；困難維持現有完整版本
+  function isSimplified() { return activeDifficulty === 'easy' || activeDifficulty === 'medium'; }
+  function showCaption() { return activeDifficulty !== 'easy'; }
+
+  // 語音朗讀：iOS 上 speechSynthesis 需要使用者手勢才會發聲，所以一律只在既有的點擊事件裡呼叫，不做畫面一出現就自動念
+  function speak(text) {
+    if (!text || !('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel(); // 避免上一句還沒念完，新的一句就疊上來搶著念
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = 'zh-TW';
+    u.rate = 0.92;
+    window.speechSynthesis.speak(u);
+  }
+
+  // 簡化內容的共用小元件：一張圖（或影片，供之後放老師自製的 AI 影片用）+ 朗讀按鈕，畫面上要不要顯示文字依 showCaption() 決定
+  function renderSimplifiedCard(opts) {
+    var text = opts.text || '';
+    var spoken = opts.spokenText || text;
+    var visualHtml = opts.video
+      ? '<video src="' + opts.video + '" controls playsinline class="w-full max-w-xs rounded-xl shadow-md"></video>'
+      : '<img src="' + opts.img + '" alt="' + escapeHtml(spoken) + '" class="w-40 h-40 object-contain drop-shadow-md" />';
+    return '<div class="simplified-card flex flex-col items-center gap-space-sm">' +
+      visualHtml +
+      '<button type="button" class="simplified-speak-btn flex items-center gap-1.5 px-space-lg py-space-sm rounded-full bg-primary text-on-primary font-label-md text-label-md shadow-md active:scale-95" data-speak="' + escapeHtml(spoken) + '">' +
+      '<span class="material-symbols-outlined text-[22px]">volume_up</span><span>播放語音</span></button>' +
+      (showCaption() && text ? '<p class="font-headline-sm text-headline-sm text-on-surface text-center">' + escapeHtml(text) + '</p>' : '') +
+      '</div>';
+  }
+
+  // 掛在共同祖先上一次即可涵蓋所有動態插入的 renderSimplifiedCard 播放按鈕
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest && e.target.closest('.simplified-speak-btn');
+    if (btn) speak(btn.dataset.speak);
+  });
 
   function loadProfiles() {
     try { return JSON.parse(localStorage.getItem(PROFILES_KEY)) || []; } catch (e) { return []; }
@@ -53,6 +93,7 @@
 
   // ---------- 狀態管理（每位使用者各自一份） ----------
   var activeProfileId = null;
+  var activeDifficulty = 'hard'; // 'easy' | 'medium' | 'hard'，建立學生資料時選定一次，登入時從 profile 讀出
 
   function todayStr() {
     var d = new Date();
@@ -1732,6 +1773,28 @@
     });
   }
 
+  // 難易度選擇卡片：獨立的全螢幕步驟，故意不預選第一個，一定要自己點過一次才能按下確認
+  function renderDifficultyPicker() {
+    var wrap = document.getElementById('difficulty-step-picker');
+    var confirmBtn = document.getElementById('difficulty-step-confirm-btn');
+    wrap.dataset.selected = '';
+    confirmBtn.disabled = true;
+    wrap.innerHTML = DIFFICULTY_CHOICES.map(function (d) {
+      return '<button type="button" data-difficulty="' + d.id + '" class="difficulty-choice flex flex-col items-center gap-space-xs p-space-lg rounded-2xl bg-surface-container-lowest border-2 border-outline-variant shadow-sm transition-all">' +
+        '<span class="text-[72px] leading-none">' + d.icon + '</span>' +
+        '<span class="font-headline-sm text-headline-sm text-on-surface">' + d.label + '</span>' +
+        '</button>';
+    }).join('');
+    wrap.querySelectorAll('.difficulty-choice').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        wrap.dataset.selected = btn.dataset.difficulty;
+        confirmBtn.disabled = false;
+        wrap.querySelectorAll('.difficulty-choice').forEach(function (b) { b.classList.remove('bg-primary-fixed', 'border-primary', 'ring-2', 'ring-primary'); b.classList.add('bg-surface-container-lowest', 'border-outline-variant'); });
+        btn.classList.remove('bg-surface-container-lowest', 'border-outline-variant'); btn.classList.add('bg-primary-fixed', 'border-primary', 'ring-2', 'ring-primary');
+      });
+    });
+  }
+
   function enterApp(id) {
     activeProfileId = id;
     state = loadState(id);
@@ -1741,6 +1804,7 @@
     document.getElementById('profile-gate').hidden = true;
     document.getElementById('app-shell').hidden = false;
     var p = loadProfiles().filter(function (x) { return x.id === id; })[0];
+    activeDifficulty = (p && p.difficulty) || 'hard'; // 舊資料沒有 difficulty 欄位時，維持原本完整版行為
     if (p) {
       document.getElementById('profile-switch-name').textContent = p.name;
       document.getElementById('profile-switch-avatar').textContent = p.avatar;
@@ -1758,6 +1822,7 @@
 
   function chooseProfile(id) { enterApp(id); }
 
+  // 步驟一：填名字/頭像/密碼 → 驗證通過後不直接建立資料，先跳到步驟二（獨立全螢幕選難度）
   document.getElementById('profile-create-btn').addEventListener('click', function () {
     var nameInput = document.getElementById('profile-name-input');
     var name = nameInput.value.trim();
@@ -1767,13 +1832,32 @@
     var pinErr = document.getElementById('profile-pin-err');
     if (!/^\d{4}$/.test(pin)) { pinErr.classList.remove('hidden'); pinInput.focus(); return; }
     pinErr.classList.add('hidden');
+    renderDifficultyPicker();
+    document.getElementById('profile-gate').hidden = true;
+    document.getElementById('profile-difficulty-step').hidden = false;
+  });
+
+  document.getElementById('difficulty-step-back-btn').addEventListener('click', function () {
+    document.getElementById('profile-difficulty-step').hidden = true;
+    document.getElementById('profile-gate').hidden = false;
+  });
+
+  // 步驟二：選定難度後才真正建立學生資料
+  document.getElementById('difficulty-step-confirm-btn').addEventListener('click', function () {
+    var difficulty = document.getElementById('difficulty-step-picker').dataset.selected;
+    if (!difficulty) return;
+    var nameInput = document.getElementById('profile-name-input');
+    var name = nameInput.value.trim();
+    var pinInput = document.getElementById('profile-pin-input');
+    var pin = pinInput.value.trim();
     var avatar = document.getElementById('profile-avatar-picker').dataset.selected || AVATAR_CHOICES[0];
     var profiles = loadProfiles();
     var id = 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
-    profiles.push({ id: id, name: name, avatar: avatar, createdAt: todayStr(), pin: pin });
+    profiles.push({ id: id, name: name, avatar: avatar, createdAt: todayStr(), pin: pin, difficulty: difficulty });
     saveProfiles(profiles);
     nameInput.value = '';
     pinInput.value = '';
+    document.getElementById('profile-difficulty-step').hidden = true;
     chooseProfile(id);
   });
 

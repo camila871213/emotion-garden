@@ -35,9 +35,23 @@ tailwind.config={darkMode:"class",theme:{extend:{
       <div class="flex flex-wrap items-center justify-center gap-space-xs" id="profile-avatar-picker"></div>
       <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="profile-pin-input" placeholder="設定 4 位數密碼（登入用）" class="w-full h-14 px-space-md rounded-lg bg-surface-container-low text-center font-body-lg text-body-lg tracking-[0.5em] outline-none focus:ring-2 focus:ring-primary" />
       <p id="profile-pin-err" class="font-label-sm text-label-sm text-error hidden">請輸入 4 位數字當密碼</p>
-      <button type="button" id="profile-create-btn" class="w-full h-14 rounded-full bg-primary text-on-primary font-label-lg text-label-lg shadow-md active:translate-y-0.5 transition-all">開始種花仙子！</button>
+      <button type="button" id="profile-create-btn" class="w-full h-14 rounded-full bg-primary text-on-primary font-label-lg text-label-lg shadow-md active:translate-y-0.5 transition-all">下一步：選擇難度</button>
     </div>
     <button type="button" id="teacher-area-btn" class="text-on-surface-variant font-label-sm text-label-sm underline underline-offset-2">🔒 老師專用</button>
+  </div>
+</div>
+
+<!-- ============ 新增小朋友的第二步：獨立全螢幕選擇花園難度 ============ -->
+<div id="profile-difficulty-step" class="fixed inset-0 z-[300] bg-surface flex flex-col items-center justify-center p-space-lg overflow-y-auto" hidden>
+  <div class="w-full max-w-2xl space-y-space-lg text-center py-space-xl">
+    <div class="space-y-space-xs">
+      <div class="text-[56px] leading-none">🌈</div>
+      <h1 class="font-headline-lg text-headline-lg text-primary">選擇花園難度</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant">依照孩子現在的程度，選一個最適合的花園</p>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-space-md" id="difficulty-step-picker"></div>
+    <button type="button" id="difficulty-step-confirm-btn" disabled class="w-full h-14 rounded-full bg-primary text-on-primary font-label-lg text-label-lg shadow-md active:translate-y-0.5 transition-all disabled:opacity-40 disabled:pointer-events-none">🌱 開始種花仙子！</button>
+    <button type="button" id="difficulty-step-back-btn" class="text-on-surface-variant font-label-sm text-label-sm underline underline-offset-2">‹ 上一步</button>
   </div>
 </div>
 

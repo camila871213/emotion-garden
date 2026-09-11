@@ -1,7 +1,7 @@
 /* 心靈植癒園 - 自訂樣式(Tailwind 涵蓋不到的動畫與細節) */
 
 .view[hidden] { display: none; }
-#profile-gate[hidden], #app-shell[hidden] { display: none !important; }
+#profile-gate[hidden], #app-shell[hidden], #profile-difficulty-step[hidden] { display: none !important; }
 
 /* 呼吸圈動畫 */
 .breath-ring {
