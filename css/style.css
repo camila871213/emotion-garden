@@ -151,6 +151,18 @@
   transition: opacity 0.2s ease;
 }
 
+/* 中等難度的注音輔助：字旁邊小小的注音符號，字體要涵蓋到 Zhuyin 字元(U+3105-312D) */
+ruby {
+  ruby-position: over;
+}
+rt {
+  font-size: 0.5em;
+  font-family: "PingFang TC", "Heiti TC", "Microsoft JhengHei", sans-serif;
+  color: inherit;
+  opacity: 0.75;
+  user-select: none;
+}
+
 /* 全域按鈕觸控回饋：按下時輕微縮小＋變暗，放開時彈回 */
 button, a.nav-link, a.nav-link-mobile, .mood-pebble, .jungle-opt {
   transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.12s ease, box-shadow 0.12s ease;
