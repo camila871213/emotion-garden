@@ -151,16 +151,20 @@
   transition: opacity 0.2s ease;
 }
 
-/* 中等難度的注音輔助：字旁邊小小的注音符號，字體要涵蓋到 Zhuyin 字元(U+3105-312D) */
+/* 中等難度的注音輔助：仿照國小課本排法，每個字的注音直式疊在字的正上方（不是橫向排開），
+   這樣三個符號以上的字（例如 ㄒㄧㄚˋ）才會看起來是「一組」，不會被誤認成分開的好幾個字 */
 ruby {
   ruby-position: over;
 }
 rt {
-  font-size: 0.5em;
+  font-size: 0.42em;
   font-family: "PingFang TC", "Heiti TC", "Microsoft JhengHei", sans-serif;
   color: inherit;
   opacity: 0.75;
   user-select: none;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  letter-spacing: -0.1em;
 }
 
 /* 全域按鈕觸控回饋：按下時輕微縮小＋變暗，放開時彈回 */
