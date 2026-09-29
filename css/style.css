@@ -156,15 +156,38 @@
 ruby {
   ruby-position: over;
 }
+/* 含有注音的段落要把行高拉大、上面留出空間，不然直式注音疊起來的高度會蓋到國字或上一行 */
+p:has(ruby) {
+  line-height: 2.8 !important;
+  padding-top: 0.35em;
+}
 rt {
-  font-size: 0.42em;
+  font-size: 0.46em;
+  font-weight: 700;
   font-family: "PingFang TC", "Heiti TC", "Microsoft JhengHei", sans-serif;
   color: inherit;
-  opacity: 0.75;
+  opacity: 0.9;
   user-select: none;
   writing-mode: vertical-rl;
   text-orientation: upright;
-  letter-spacing: -0.1em;
+  letter-spacing: -0.05em;
+}
+
+/* 簡單難度：只顯示注音本身（不顯示國字），字級要夠大、夠粗才看得清楚 */
+.zhuyin-solo-wrap {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 0.25em;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.zhuyin-solo {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  font-family: "PingFang TC", "Heiti TC", "Microsoft JhengHei", sans-serif;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.05em;
 }
 
 /* 全域按鈕觸控回饋：按下時輕微縮小＋變暗，放開時彈回 */

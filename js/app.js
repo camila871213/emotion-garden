@@ -48,9 +48,8 @@
     { id: 'hard', icon: '🌳', label: '困難' }
   ];
 
-  // 簡單／中等難度共用同一份簡化內容（語音+圖片/影片），差別只在字幕要不要顯示在畫面上；困難維持現有完整版本
+  // 簡單／中等難度共用同一份簡化內容（語音+圖片/影片），差別在文字怎麼呈現；困難維持現有完整版本
   function isSimplified() { return activeDifficulty === 'easy' || activeDifficulty === 'medium'; }
-  function showCaption() { return activeDifficulty !== 'easy'; }
 
   // 語音朗讀：iOS 上 speechSynthesis 需要使用者手勢才會發聲，所以一律只在既有的點擊事件裡呼叫，不做畫面一出現就自動念
   function speak(text) {
@@ -62,7 +61,7 @@
     window.speechSynthesis.speak(u);
   }
 
-  // 簡化內容的共用小元件：一張圖（或影片，供之後放老師自製的 AI 影片用）+ 朗讀按鈕，畫面上要不要顯示文字依 showCaption() 決定
+  // 簡化內容的共用小元件：一張圖（或影片，供之後放老師自製的 AI 影片用）+ 朗讀按鈕，文字一律顯示，但呈現方式依難度而定（見 phoneticText）
   function renderSimplifiedCard(opts) {
     var text = opts.text || '';
     var spoken = opts.spokenText || text;
@@ -73,7 +72,7 @@
       visualHtml +
       '<button type="button" class="simplified-speak-btn flex items-center gap-1.5 px-space-lg py-space-sm rounded-full bg-primary text-on-primary font-label-md text-label-md shadow-md active:scale-95" data-speak="' + escapeHtml(spoken) + '">' +
       '<span class="material-symbols-outlined text-[22px]">volume_up</span><span>播放語音</span></button>' +
-      (showCaption() && text ? '<p class="font-headline-sm text-headline-sm text-on-surface text-center">' + textOrRuby(text) + '</p>' : '') +
+      (text ? '<p class="font-headline-sm text-headline-sm text-on-surface text-center">' + phoneticText(text) + '</p>' : '') +
       '</div>';
   }
 
@@ -133,6 +132,7 @@
     '默': 'ㄇㄛˋ', '點': 'ㄉㄧㄢˇ'
   };
 
+  // 中等難度：國字加注音（ruby 標註在國字正上方）
   function renderRuby(text) {
     if (!text) return '';
     return Array.from(text).map(function (ch) {
@@ -141,9 +141,21 @@
     }).join('');
   }
 
-  // 只有中等難度才需要注音輔助認字：簡單難度不顯示文字，困難難度的孩子已經能自己閱讀了
-  function useZhuyin() { return activeDifficulty === 'medium'; }
-  function textOrRuby(text) { return useZhuyin() ? renderRuby(text) : escapeHtml(text); }
+  // 簡單難度：完全不顯示國字，只顯示注音本身（每個字的注音直式疊成一小條），沒收錄注音的字（標點符號等）就照原樣顯示
+  function renderZhuyinOnly(text) {
+    if (!text) return '';
+    return '<span class="zhuyin-solo-wrap">' + Array.from(text).map(function (ch) {
+      var zy = ZHUYIN_MAP[ch];
+      return zy ? '<span class="zhuyin-solo">' + zy + '</span>' : '<span>' + escapeHtml(ch) + '</span>';
+    }).join('') + '</span>';
+  }
+
+  // 三種難度呈現文字的方式：簡單＝只顯示注音、中等＝國字+注音、困難＝純國字
+  function phoneticText(text) {
+    if (activeDifficulty === 'easy') return renderZhuyinOnly(text);
+    if (activeDifficulty === 'medium') return renderRuby(text);
+    return escapeHtml(text);
+  }
 
   function loadProfiles() {
     try { return JSON.parse(localStorage.getItem(PROFILES_KEY)) || []; } catch (e) { return []; }
@@ -1551,9 +1563,9 @@
       '<span class="absolute top-4 left-4 px-space-md py-1 rounded-full bg-white/90 text-on-surface font-label-md text-label-md font-bold">' + (junglePanelIndex + 1) + ' / ' + sc.panels.length + '</span>' +
       (tag ? '<span class="absolute top-4 right-4 px-space-md py-1 rounded-full font-label-md text-label-md font-bold" style="background:' + tag.bg + ';color:' + tag.color + ';">' + tag.label + '</span>' : '') +
       visualHtml +
-      (showCaption() ? '<div class="w-full max-w-md min-h-[4.5rem] flex items-center justify-center bg-white/95 rounded-xl px-space-lg py-space-md shadow-md">' +
-      '<p class="font-headline-md text-headline-md text-on-surface text-center leading-relaxed">' + textOrRuby(panel.caption) + '</p>' +
-      '</div>' : '') +
+      '<div class="w-full max-w-md min-h-[4.5rem] flex items-center justify-center bg-white/95 rounded-xl px-space-lg py-space-md shadow-md">' +
+      '<p class="font-headline-md text-headline-md text-on-surface text-center leading-relaxed">' + phoneticText(panel.caption) + '</p>' +
+      '</div>' +
       (isSimplified() && !showVideo ? '<button type="button" class="simplified-speak-btn flex items-center gap-1.5 px-space-lg py-space-sm rounded-full bg-primary text-on-primary font-label-md text-label-md shadow-md active:scale-95" data-speak="' + escapeHtml(panel.caption) + '"><span class="material-symbols-outlined text-[22px]">volume_up</span><span>再聽一次</span></button>' : '') +
       '<span class="flex items-center gap-1 text-on-surface-variant font-label-md text-label-md pointer-events-none">' + (isLast ? '開始回答' : '滑動或點一下繼續') + ' <span class="material-symbols-outlined text-[22px]">arrow_forward</span></span>' +
       (canGoBack ? '<button type="button" id="jungle-panel-prev" aria-label="上一格" class="absolute left-3 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/90 hover:bg-white flex items-center justify-center shadow-lg z-10"><span class="material-symbols-outlined text-[26px] text-on-surface">chevron_left</span></button>' : '') +
@@ -1617,9 +1629,9 @@
     renderJungleDots();
     var order = getOptionOrder(sc);
     var html = '<div class="text-[96px] sm:text-[112px] leading-none drop-shadow-lg">' + sc.emoji + '</div>' +
-      (showCaption() ? '<div class="max-w-lg bg-white/95 rounded-xl px-space-lg py-space-md shadow-md"><p class="font-headline-md text-headline-md text-on-surface text-center leading-relaxed">' + textOrRuby(sc.scene) + '</p></div>' +
-      (sc.cue ? '<div class="max-w-lg bg-white/85 backdrop-blur-sm rounded-xl px-space-lg py-space-sm shadow-md"><p class="font-label-lg text-label-lg text-on-surface text-center leading-relaxed">' + textOrRuby(sc.cue) + '</p></div>' : '') +
-      '<div class="inline-flex bg-primary rounded-xl px-space-lg py-space-sm shadow-lg"><p class="font-headline-sm text-headline-sm text-on-primary text-center font-bold">❓ ' + textOrRuby(u.prompt) + '</p></div>' : '') +
+      '<div class="max-w-lg bg-white/95 rounded-xl px-space-lg py-space-md shadow-md"><p class="font-headline-md text-headline-md text-on-surface text-center leading-relaxed">' + phoneticText(sc.scene) + '</p></div>' +
+      (sc.cue ? '<div class="max-w-lg bg-white/85 backdrop-blur-sm rounded-xl px-space-lg py-space-sm shadow-md"><p class="font-label-lg text-label-lg text-on-surface text-center leading-relaxed">' + phoneticText(sc.cue) + '</p></div>' : '') +
+      '<div class="inline-flex bg-primary rounded-xl px-space-lg py-space-sm shadow-lg"><p class="font-headline-sm text-headline-sm text-on-primary text-center font-bold">❓ ' + phoneticText(u.prompt) + '</p></div>' +
       (isSimplified() ? '<button type="button" class="simplified-speak-btn flex items-center gap-1.5 px-space-lg py-space-sm rounded-full bg-primary text-on-primary font-label-md text-label-md shadow-md active:scale-95" data-speak="' + escapeHtml(sc.scene + '。' + (sc.cue ? sc.cue + '。' : '') + u.prompt + '。' + order.map(function (oi) { return sc.options[oi].label; }).join('。')) + '"><span class="material-symbols-outlined text-[22px]">volume_up</span><span>再聽一次</span></button>' : '') +
       '<div class="flex flex-col sm:flex-row gap-space-md w-full max-w-lg" id="jungle-options">' +
       order.map(function (oi) {
@@ -1628,7 +1640,7 @@
         return '<button type="button" data-oi="' + oi + '" ' + (isOut ? 'disabled' : '') + ' class="jungle-opt flex-1 flex flex-col items-center gap-1.5 px-space-lg py-space-lg rounded-xl shadow-xl transition-all ' +
           (isOut ? 'bg-white/40 opacity-40 grayscale cursor-not-allowed' : 'bg-white/90 hover:bg-white active:scale-95') + '">' +
           '<span class="text-[56px] leading-none">' + o.emoji + '</span>' +
-          '<span class="font-label-lg text-label-lg text-on-surface text-center">' + textOrRuby(o.label) + '</span>' +
+          '<span class="font-label-lg text-label-lg text-on-surface text-center">' + phoneticText(o.label) + '</span>' +
           (isOut ? '<span class="text-[13px] text-on-surface-variant">已經試過囉</span>' : '') +
           '</button>';
       }).join('') + '</div>' +
@@ -1656,8 +1668,8 @@
           var pos = indices.indexOf(idx);
           var nextIdx = pos < indices.length - 1 ? indices[pos + 1] : null;
           if (isSimplified()) speak(choice.feedback);
-          fb.innerHTML = (showCaption() ? '<div class="inline-flex items-center gap-space-xs px-space-md py-space-sm rounded-full bg-white/95 shadow-xl">' +
-            '<span class="font-label-md text-label-md text-on-surface">' + textOrRuby(choice.feedback) + '</span></div>' : '') +
+          fb.innerHTML = '<div class="inline-flex items-center gap-space-xs px-space-md py-space-sm rounded-full bg-white/95 shadow-xl">' +
+            '<span class="font-label-md text-label-md text-on-surface">' + phoneticText(choice.feedback) + '</span></div>' +
             '<div class="mt-space-sm flex flex-col items-center gap-space-xs">' +
             '<button type="button" id="jungle-next-btn" class="px-space-lg h-14 rounded-full bg-primary text-on-primary font-label-md text-label-md shadow-xl">' +
             (nextIdx !== null ? '下一關 →' : '🎉 完成單元') + '</button>' +
@@ -1678,11 +1690,10 @@
           var fairy = pickAssistFairy();
           var nextExcluded = excludedOis.concat([oi]);
           if (isSimplified()) speak(fairy.fairyName + '飛來幫忙。' + choice.feedback);
-          fb.innerHTML = (showCaption() ? '<div class="flex items-center gap-space-sm px-space-md py-space-sm rounded-2xl bg-white/95 shadow-xl text-left max-w-sm mx-auto">' +
+          fb.innerHTML = '<div class="flex items-center gap-space-sm px-space-md py-space-sm rounded-2xl bg-white/95 shadow-xl text-left max-w-sm mx-auto">' +
             '<img src="' + fairy.fairyImg + '" alt="' + fairy.fairyName + '" class="w-14 h-14 object-contain flex-shrink-0 fairy-float" />' +
             '<div><p class="font-label-sm text-label-sm text-primary font-bold">' + fairy.fairyName + ' 飛來幫忙！</p>' +
-            '<p class="font-body-sm text-body-sm text-on-surface">' + textOrRuby(choice.feedback) + '</p></div></div>' :
-            '<img src="' + fairy.fairyImg + '" alt="' + fairy.fairyName + '" class="w-14 h-14 object-contain mx-auto fairy-float" />') +
+            '<p class="font-body-sm text-body-sm text-on-surface">' + phoneticText(choice.feedback) + '</p></div></div>' +
             '<div class="mt-space-sm"><button type="button" id="jungle-retry-btn" class="px-space-lg h-14 rounded-full bg-white text-on-surface font-label-md text-label-md shadow-xl">🔄 再試一次</button></div>';
           document.getElementById('jungle-retry-btn').addEventListener('click', function () {
             jungleAnswered = false;
