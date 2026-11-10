@@ -151,44 +151,36 @@
   transition: opacity 0.2s ease;
 }
 
-/* 中等難度的注音輔助：仿照國小課本排法，每個字的注音直式疊在字的正上方（不是橫向排開），
-   這樣三個符號以上的字（例如 ㄒㄧㄚˋ）才會看起來是「一組」，不會被誤認成分開的好幾個字 */
-ruby {
-  ruby-position: over;
+/* 簡單／中等難度的注音：用注音字型把注音直接畫在國字右側（國小課本排法）。
+   字型是從 ButTaiwan/bpmfvs 的「源泉注音圓體」「字嗨注音(只有注音)」裁出 App 用到的字，授權文件在 assets/fonts/。
+   瀏覽器只有在畫面真的用到時才會下載，困難難度的小朋友不會多載任何東西。 */
+@font-face {
+  font-family: 'BpmfRounded';
+  font-weight: 500;
+  font-display: swap;
+  src: url('../assets/fonts/BpmfGenSenRounded-M.woff2') format('woff2');
 }
-/* 含有注音的段落要把行高拉大、上面留出空間，不然直式注音疊起來的高度會蓋到國字或上一行 */
-p:has(ruby) {
-  line-height: 2.8 !important;
-  padding-top: 0.35em;
-}
-rt {
-  font-size: 0.46em;
+@font-face {
+  font-family: 'BpmfRounded';
   font-weight: 700;
-  font-family: "PingFang TC", "Heiti TC", "Microsoft JhengHei", sans-serif;
-  color: inherit;
-  opacity: 0.9;
-  user-select: none;
-  writing-mode: vertical-rl;
-  text-orientation: upright;
-  letter-spacing: -0.05em;
+  font-display: swap;
+  src: url('../assets/fonts/BpmfGenSenRounded-B.woff2') format('woff2');
 }
-
-/* 簡單難度：只顯示注音本身（不顯示國字），字級要夠大、夠粗才看得清楚 */
-.zhuyin-solo-wrap {
-  display: inline-flex;
-  align-items: flex-end;
-  gap: 0.25em;
-  flex-wrap: wrap;
-  justify-content: center;
+@font-face {
+  font-family: 'BpmfOnly';
+  font-weight: 400;
+  font-display: swap;
+  src: url('../assets/fonts/BpmfZihiOnly-R.woff2') format('woff2');
 }
-.zhuyin-solo {
-  writing-mode: vertical-rl;
-  text-orientation: upright;
-  font-family: "PingFang TC", "Heiti TC", "Microsoft JhengHei", sans-serif;
-  font-weight: 700;
-  line-height: 1.05;
-  letter-spacing: -0.05em;
+/* 注音只佔每個字寬度的約三分之一，字級要比一般文字大才讀得清楚 */
+.zy-medium, .zy-easy {
+  font-size: 1.5em;
+  line-height: 1.55;
+  letter-spacing: 0.02em;
 }
+.zy-medium { font-family: 'BpmfRounded', sans-serif; font-weight: 500; }
+/* 只有注音的字型只有一種字重，用 700 讓瀏覽器補粗，筆畫比較不會太細 */
+.zy-easy { font-family: 'BpmfOnly', sans-serif; font-weight: 700; }
 
 /* 全域按鈕觸控回饋：按下時輕微縮小＋變暗，放開時彈回 */
 button, a.nav-link, a.nav-link-mobile, .mood-pebble, .jungle-opt {

@@ -1,0 +1,10 @@
+{
+  "name": "zhuyin-build-tools",
+  "private": true,
+  "type": "module",
+  "description": "產生注音字型資料的建置工具（不會被網站載入）",
+  "dependencies": {
+    "pinyin-pro": "^3.29.4",
+    "pinyin-to-zhuyin": "^1.1.0"
+  }
+}
