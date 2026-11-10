@@ -510,8 +510,60 @@
   // ============ 情緒澆灌日記 ============
   var diarySelectedMood = null;
 
+  // 簡單／中等難度的日記：不用打字，只要點一張表情臉。每種心情用一個簡單的詞（不是「快樂日光」這種比喻），
+  // 搭配大表情；點下去會念「我覺得快樂」。完成一次得 2 滴甘露（困難版是選心情 1 滴 + 寫小事 1 滴，這裡沒有寫的部分，所以直接給滿）。
+  var DIARY_SIMPLE = {
+    sunny:  { emoji: '😊', word: '快樂' },
+    storm:  { emoji: '😠', word: '生氣' },
+    rain:   { emoji: '😢', word: '難過' },
+    breeze: { emoji: '😌', word: '平靜' },
+    fog:    { emoji: '😨', word: '害怕' }
+  };
+  var SIMPLE_DIARY_DROPS = 2;
+
+  // 換難度（換學生）時，頁面上固定的標題要換回原文：第一次載入時先把 HTML 裡的原文記下來
+  var DIARY_CHROME_IDS = ['diary-headline', 'diary-step1-title', 'diary-step1-note', 'diary-submit-title', 'diary-submit-desc', 'diary-history-title'];
+  DIARY_CHROME_IDS.forEach(function (id) { var el = document.getElementById(id); el.dataset.orig = el.innerHTML; });
+
+  function setDiaryChrome() {
+    var simple = isSimplified();
+    var texts = simple ? {
+      'diary-headline': phoneticText('今天的心情怎麼樣？'),
+      'diary-step1-title': phoneticText('選一個心情'),
+      'diary-step1-note': '',
+      'diary-submit-title': phoneticText('完成今天的心情'),
+      'diary-submit-desc': '',
+      'diary-history-title': phoneticText('我的心情紀錄')
+    } : null;
+    DIARY_CHROME_IDS.forEach(function (id) {
+      var el = document.getElementById(id);
+      el.innerHTML = simple ? texts[id] : el.dataset.orig;
+    });
+    document.getElementById('diary-step2-card').hidden = simple;
+  }
+
   function renderDiaryMoodPicker() {
     var wrap = document.getElementById('diary-mood-picker');
+    if (isSimplified()) {
+      wrap.innerHTML = MOOD_ORDER.map(function (key) {
+        var d = DIARY_SIMPLE[key];
+        var active = diarySelectedMood === key;
+        return '<button type="button" data-mood="' + key + '" aria-label="' + d.word + '" class="diary-mood-btn flex flex-col items-center justify-center gap-space-xs p-space-md rounded-2xl border-2 transition-all duration-200 min-h-[140px] active:scale-95 ' +
+          (active ? 'bg-primary-fixed/60 border-primary ring-2 ring-primary shadow-md' : 'bg-surface-container-low border-outline-variant hover:bg-surface-container-high') + '">' +
+          '<span class="text-[56px] leading-none">' + d.emoji + '</span>' +
+          '<span class="text-[22px] text-on-surface font-bold leading-tight">' + phoneticText(d.word) + '</span>' +
+          '</button>';
+      }).join('');
+      wrap.querySelectorAll('.diary-mood-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          diarySelectedMood = btn.dataset.mood;
+          speak('我覺得' + DIARY_SIMPLE[diarySelectedMood].word); // 點擊當下念，iOS 需要使用者手勢
+          renderDiaryMoodPicker();
+          updateDiarySubmitState();
+        });
+      });
+      return;
+    }
     wrap.innerHTML = MOOD_ORDER.map(function (key) {
       var m = MOODS[key];
       var active = diarySelectedMood === key;
@@ -535,6 +587,11 @@
     var btn = document.getElementById('diary-submit-btn');
     var label = document.getElementById('diary-submit-label');
     var alreadyToday = state.lastEntryDate === todayStr();
+    if (isSimplified()) {
+      btn.disabled = alreadyToday || !diarySelectedMood;
+      label.innerHTML = alreadyToday ? phoneticText('今天完成了') : (!diarySelectedMood ? phoneticText('先選一個心情') : phoneticText('完成，得到兩滴甘露'));
+      return;
+    }
     if (alreadyToday) {
       btn.disabled = true;
       label.textContent = '今天已經澆灌過囉，明天再來';
@@ -554,6 +611,18 @@
   function renderDiaryHistory() {
     var list = document.getElementById('diary-history-list');
     var entries = state.diaryEntries.slice(-7).reverse();
+    if (isSimplified()) {
+      list.innerHTML = entries.length ? entries.map(function (e) {
+        var d = DIARY_SIMPLE[e.mood];
+        return '<article class="bg-surface-container-lowest p-space-md rounded-lg shadow-sm flex items-center gap-space-md">' +
+          '<span class="text-[40px] leading-none">' + d.emoji + '</span>' +
+          '<span class="text-[22px] text-on-surface font-bold flex-1">' + phoneticText(d.word) + '</span>' +
+          '<span class="font-label-sm text-label-sm text-on-surface-variant">' + e.date + '</span>' +
+          '<span class="font-label-sm text-label-sm text-tertiary flex items-center flex-shrink-0"><span class="material-symbols-outlined text-[14px]">water_drop</span>+' + e.drops + '</span>' +
+          '</article>';
+      }).join('') : '<p class="text-[20px] text-on-surface-variant p-space-md">' + phoneticText('還沒有紀錄') + '</p>';
+      return;
+    }
     if (!entries.length) {
       list.innerHTML = '<p class="font-body-sm text-body-sm text-on-surface-variant p-space-md">還沒有紀錄，寫下今天的第一篇日記吧！</p>';
       return;
@@ -581,14 +650,20 @@
   function renderDiary() {
     refreshDewBadges();
     diarySelectedMood = null;
+    setDiaryChrome();
     renderDiaryMoodPicker();
     document.getElementById('diary-journal-input').value = '';
     document.getElementById('diary-char-count').textContent = '已記錄 0 字';
-    document.getElementById('diary-stage-badge').textContent = '目前小樹進度 · ' + state.growthStage + '/6 滴甘霖';
     var alreadyToday = state.lastEntryDate === todayStr();
-    document.getElementById('diary-lock-msg').textContent = alreadyToday
-      ? '今天已經完成澆灌了，明天再一起繼續記錄心情吧！'
-      : '每一次坦率面對自己的感受，都在滋養心靈裡最勇敢的種子。';
+    if (isSimplified()) {
+      document.getElementById('diary-stage-badge').textContent = '💧 ' + state.growthStage + ' / 6';
+      document.getElementById('diary-lock-msg').innerHTML = alreadyToday ? phoneticText('今天完成了，明天再來！') : '';
+    } else {
+      document.getElementById('diary-stage-badge').textContent = '目前小樹進度 · ' + state.growthStage + '/6 滴甘霖';
+      document.getElementById('diary-lock-msg').textContent = alreadyToday
+        ? '今天已經完成澆灌了，明天再一起繼續記錄心情吧！'
+        : '每一次坦率面對自己的感受，都在滋養心靈裡最勇敢的種子。';
+    }
     updateDiarySubmitState();
     renderDiaryHistory();
   }
@@ -600,8 +675,9 @@
 
   document.getElementById('diary-submit-btn').addEventListener('click', function () {
     if (!diarySelectedMood || state.lastEntryDate === todayStr()) return;
-    var text = document.getElementById('diary-journal-input').value.trim();
-    var drops = 1 + (text.length > 0 ? 1 : 0);
+    var simple = isSimplified();
+    var text = simple ? '' : document.getElementById('diary-journal-input').value.trim();
+    var drops = simple ? SIMPLE_DIARY_DROPS : 1 + (text.length > 0 ? 1 : 0);
     state.waterInventory += drops;
     state.diaryEntries.push({ date: todayStr(), mood: diarySelectedMood, text: text, drops: drops });
     state.lastEntryDate = todayStr();
@@ -609,6 +685,18 @@
     renderDiary();
     refreshDewBadges();
     playSuccess();
+    if (simple) {
+      speak('今天得到' + drops + '滴甘露。回花園，幫小樹澆水吧！');
+      showModal(
+        '<div class="text-center space-y-space-sm">' +
+        '<span class="material-symbols-outlined text-tertiary" style="font-size:48px;">celebration</span>' +
+        '<h2 class="text-[26px] font-bold text-primary">' + phoneticText('今天得到') + ' ' + drops + ' ' + phoneticText('滴甘露！') + '</h2>' +
+        '<p class="text-[22px] text-on-surface-variant">' + phoneticText('回花園，幫小樹澆水吧！') + '</p>' +
+        '<button class="w-full h-14 rounded-full bg-primary text-on-primary text-[20px]" onclick="closeModal(); location.hash=\'garden\'; window.__switchView(\'garden\');">' + phoneticText('去我的花園') + '</button>' +
+        '</div>'
+      );
+      return;
+    }
     showModal(
       '<div class="text-center space-y-space-sm">' +
       '<span class="material-symbols-outlined text-tertiary" style="font-size:48px;">celebration</span>' +

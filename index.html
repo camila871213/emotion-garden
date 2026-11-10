@@ -262,7 +262,7 @@ tailwind.config={darkMode:"class",theme:{extend:{
             </div>
             <div class="flex flex-col min-w-0">
               <span class="px-space-sm py-space-xxs rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-bold inline-block w-fit" id="diary-stage-badge">第 0 期培育中 · 0/6 滴甘霖</span>
-              <p class="font-headline-sm text-headline-sm text-primary mt-space-xxs">每天記錄一次心情，最多可以獲得 2 滴甘露喔！</p>
+              <p id="diary-headline" class="font-headline-sm text-headline-sm text-primary mt-space-xxs">每天記錄一次心情，最多可以獲得 2 滴甘露喔！</p>
               <p class="font-body-sm text-body-sm text-on-surface-variant" id="diary-lock-msg">每一次坦率面對自己的感受，都在滋養心靈裡最勇敢的種子。</p>
             </div>
           </div>
@@ -275,14 +275,14 @@ tailwind.config={darkMode:"class",theme:{extend:{
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-space-xs">
                 <span class="w-8 h-8 rounded-full bg-primary-container text-on-primary font-label-md text-label-md flex items-center justify-center">1</span>
-                <span class="font-headline-sm text-headline-sm text-primary">選擇今天的心情天氣</span>
+                <span id="diary-step1-title" class="font-headline-sm text-headline-sm text-primary">選擇今天的心情天氣</span>
               </div>
-              <span class="font-label-sm text-label-sm text-on-surface-variant">感受無分對錯</span>
+              <span id="diary-step1-note" class="font-label-sm text-label-sm text-on-surface-variant">感受無分對錯</span>
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-5 gap-space-xs" id="diary-mood-picker"></div>
           </div>
 
-          <div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col space-y-space-md">
+          <div id="diary-step2-card" class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col space-y-space-md">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-space-xs">
                 <span class="w-8 h-8 rounded-full bg-primary-container text-on-primary font-label-md text-label-md flex items-center justify-center">2</span>
@@ -306,8 +306,8 @@ tailwind.config={darkMode:"class",theme:{extend:{
                 <span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1;">water_drop</span>
               </div>
               <div class="flex flex-col">
-                <span class="font-headline-sm text-headline-sm text-primary">完成今日澆灌</span>
-                <span class="font-body-sm text-body-sm text-on-surface-variant">每日限一次，讓心靈有沉澱深呼吸的時間。</span>
+                <span id="diary-submit-title" class="font-headline-sm text-headline-sm text-primary">完成今日澆灌</span>
+                <span id="diary-submit-desc" class="font-body-sm text-body-sm text-on-surface-variant">每日限一次，讓心靈有沉澱深呼吸的時間。</span>
               </div>
             </div>
             <button class="w-full sm:w-auto px-space-xl py-space-sm h-touch-target-comfortable rounded-full bg-primary text-on-primary font-label-lg text-label-lg shadow-[0_4px_0_#234035] hover:bg-primary-container active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-space-xs flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none" id="diary-submit-btn" type="button" disabled>
@@ -321,7 +321,7 @@ tailwind.config={darkMode:"class",theme:{extend:{
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-space-xs">
               <span class="material-symbols-outlined text-primary text-[24px]">calendar_month</span>
-              <h2 class="font-headline-sm text-headline-sm text-primary">最近的情緒足跡</h2>
+              <h2 id="diary-history-title" class="font-headline-sm text-headline-sm text-primary">最近的情緒足跡</h2>
             </div>
           </div>
           <div class="space-y-space-xs" id="diary-history-list">

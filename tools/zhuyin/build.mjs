@@ -73,7 +73,7 @@ const CONTEXT_OVERRIDES = [
 
 // 找出會顯示在簡單／中等難度的文字欄位
 const appJs = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8');
-const fieldRe = /\b(caption|cue|label|feedback|scene|prompt|name|sub|fairyName|emotion|feeling|wish|action)\s*:\s*(?:'((?:[^'\\]|\\.)*)'|"((?:[^"\\]|\\.)*)")/g;
+const fieldRe = /\b(caption|cue|label|feedback|scene|prompt|name|sub|fairyName|emotion|feeling|wish|action|word)\s*:\s*(?:'((?:[^'\\]|\\.)*)'|"((?:[^"\\]|\\.)*)")/g;
 const strings = new Set();
 for (const m of appJs.matchAll(fieldRe)) {
   const s = (m[2] ?? m[3]).replace(/\\(.)/g, '$1');
