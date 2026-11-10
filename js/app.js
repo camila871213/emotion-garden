@@ -1362,6 +1362,13 @@
     var sc = SCENARIOS[idx];
     var u = UNITS[sc.unit];
     var pos = unitIndices(sc.unit).indexOf(idx) + 1;
+    if (isSimplified()) {
+      // 簡單／中等：不寫「處己」這種單元名稱（孩子看不懂），只留單元圖示 + 「第一關」，並依難度標上注音
+      var numerals = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+      badge.innerHTML = '<div class="inline-flex items-center gap-2 px-space-md py-1 rounded-full bg-white/25 backdrop-blur-sm text-white text-[22px] leading-tight">' +
+        '<span>' + u.icon + '</span>' + phoneticText('第' + (numerals[pos - 1] || pos) + '關') + '</div>';
+      return;
+    }
     badge.innerHTML = '<div class="inline-flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-white/25 backdrop-blur-sm text-white font-label-sm text-label-sm">' +
       '<span>' + u.icon + ' ' + u.name + '</span>' +
       '<span class="opacity-70">·</span>' +
