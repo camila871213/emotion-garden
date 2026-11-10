@@ -286,10 +286,21 @@ tailwind.config={darkMode:"class",theme:{extend:{
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-space-xs">
                 <span class="w-8 h-8 rounded-full bg-primary-container text-on-primary font-label-md text-label-md flex items-center justify-center">2</span>
-                <span class="font-headline-sm text-headline-sm text-primary">寫下今天的一件小事(選填 +1 滴)</span>
+                <span id="diary-step2-title" class="font-headline-sm text-headline-sm text-primary">寫下今天的一件小事(選填 +1 滴)</span>
               </div>
             </div>
-            <div class="relative bg-surface-container-low rounded-lg p-space-md shadow-inner focus-within:bg-surface-container-lowest transition-colors">
+            <div id="diary-voice-row" class="flex items-center gap-space-md" hidden>
+              <button type="button" id="diary-mic-btn" class="w-20 h-20 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-md flex-shrink-0" aria-label="語音輸入">
+                <span class="material-symbols-outlined text-[40px]" id="diary-mic-icon">mic</span>
+              </button>
+              <div class="flex flex-col gap-space-xs min-w-0">
+                <span id="diary-mic-status" class="font-body-md text-body-md text-on-surface-variant"></span>
+                <button type="button" id="diary-replay-btn" class="simplified-speak-btn self-start items-center gap-1.5 px-space-md py-space-xs rounded-full bg-primary-fixed text-primary font-label-md text-label-md" data-speak="" hidden>
+                  <span class="material-symbols-outlined text-[20px]">volume_up</span><span id="diary-replay-label">再聽一次</span>
+                </button>
+              </div>
+            </div>
+            <div id="diary-text-box" class="relative bg-surface-container-low rounded-lg p-space-md shadow-inner focus-within:bg-surface-container-lowest transition-colors">
               <textarea class="w-full bg-transparent border-0 resize-none outline-none font-body-md text-body-md text-on-surface placeholder:text-outline" id="diary-journal-input" placeholder="今天發生了什麼事？不用寫很多，真實就好..." rows="4"></textarea>
               <div class="flex items-center justify-between pt-space-xs mt-space-xs">
                 <div class="flex items-center gap-space-xs text-on-surface-variant font-label-sm text-label-sm">

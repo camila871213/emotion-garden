@@ -61,6 +61,37 @@
     window.speechSynthesis.speak(u);
   }
 
+  // 語音輸入（瀏覽器內建語音辨識）：同樣只在點擊事件裡啟動。不支援的瀏覽器（例如 Firefox）會回傳 null，畫面上就不顯示麥克風。
+  var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var activeRec = null;
+  function stopDictation() { if (activeRec) { try { activeRec.stop(); } catch (e) {} } }
+  function startDictation(handlers) {
+    if (!SpeechRec) return null;
+    stopDictation();
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel(); // 別讓朗讀的聲音被麥克風收進去
+    var rec = new SpeechRec();
+    var finished = false;
+    rec.lang = 'zh-TW';
+    rec.interimResults = true;
+    rec.continuous = false;
+    rec.onresult = function (ev) {
+      var t = '';
+      for (var i = 0; i < ev.results.length; i++) t += ev.results[i][0].transcript;
+      handlers.onText(t);
+    };
+    function done(err) {
+      if (finished) return;
+      finished = true;
+      if (activeRec === rec) activeRec = null;
+      handlers.onEnd(err || null);
+    }
+    rec.onerror = function (ev) { done(ev.error || 'error'); };
+    rec.onend = function () { done(null); };
+    activeRec = rec;
+    try { rec.start(); } catch (e) { activeRec = null; return null; }
+    return rec;
+  }
+
   // 簡化內容的共用小元件：一張圖（或影片，供之後放老師自製的 AI 影片用）+ 朗讀按鈕，文字一律顯示，但呈現方式依難度而定（見 phoneticText）
   function renderSimplifiedCard(opts) {
     var text = opts.text || '';
@@ -510,8 +541,8 @@
   // ============ 情緒澆灌日記 ============
   var diarySelectedMood = null;
 
-  // 簡單／中等難度的日記：不用打字，只要點一張表情臉。每種心情用一個簡單的詞（不是「快樂日光」這種比喻），
-  // 搭配大表情；點下去會念「我覺得快樂」。完成一次得 2 滴甘露（困難版是選心情 1 滴 + 寫小事 1 滴，這裡沒有寫的部分，所以直接給滿）。
+  // 簡單／中等難度的日記：點一張表情臉選心情。每種心情用一個簡單的詞（不是「快樂日光」這種比喻），
+  // 搭配大表情；點下去會念「我覺得快樂」。第二步用語音說說今天的事（三種難度都有麥克風），獎勵規則跟困難版一致。
   var DIARY_SIMPLE = {
     sunny:  { emoji: '😊', word: '快樂' },
     storm:  { emoji: '😠', word: '生氣' },
@@ -522,7 +553,7 @@
   var SIMPLE_DIARY_DROPS = 2;
 
   // 換難度（換學生）時，頁面上固定的標題要換回原文：第一次載入時先把 HTML 裡的原文記下來
-  var DIARY_CHROME_IDS = ['diary-headline', 'diary-step1-title', 'diary-step1-note', 'diary-submit-title', 'diary-submit-desc', 'diary-history-title'];
+  var DIARY_CHROME_IDS = ['diary-headline', 'diary-step1-title', 'diary-step1-note', 'diary-step2-title', 'diary-submit-title', 'diary-submit-desc', 'diary-history-title'];
   DIARY_CHROME_IDS.forEach(function (id) { var el = document.getElementById(id); el.dataset.orig = el.innerHTML; });
 
   function setDiaryChrome() {
@@ -531,6 +562,7 @@
       'diary-headline': phoneticText('今天的心情怎麼樣？'),
       'diary-step1-title': phoneticText('選一個心情'),
       'diary-step1-note': '',
+      'diary-step2-title': phoneticText('說說今天發生的事'),
       'diary-submit-title': phoneticText('完成今天的心情'),
       'diary-submit-desc': '',
       'diary-history-title': phoneticText('我的心情紀錄')
@@ -539,8 +571,74 @@
       var el = document.getElementById(id);
       el.innerHTML = simple ? texts[id] : el.dataset.orig;
     });
-    document.getElementById('diary-step2-card').hidden = simple;
+    // 簡單版沒有語音辨識就沒辦法輸入（孩子不用打字），這時整張卡片隱藏，獎勵維持固定 2 滴
+    document.getElementById('diary-step2-card').hidden = (activeDifficulty === 'easy' && !SpeechRec);
+    setupDiaryVoice();
   }
+
+  // 日記步驟 2 的語音輸入：三種難度共用同一顆麥克風；簡單版隱藏文字框（避免出現沒有注音的國字），改用「再聽一次」確認
+  var diaryDictating = false;
+  function diaryMicIdleText() {
+    if (activeDifficulty === 'hard') return SpeechRec ? '按下麥克風，用說的也可以' : '';
+    return activeDifficulty === 'easy' ? phoneticText('按一下麥克風，說說看') : phoneticText('按一下麥克風，說說看，也可以自己打字');
+  }
+  function setDiaryMicStatus(html) { document.getElementById('diary-mic-status').innerHTML = html; }
+  function updateDiaryReplay() {
+    var text = document.getElementById('diary-journal-input').value.trim();
+    var btn = document.getElementById('diary-replay-btn');
+    btn.hidden = !(isSimplified() && text);
+    btn.dataset.speak = text;
+    document.getElementById('diary-replay-label').innerHTML = phoneticText('再聽一次');
+  }
+  function setupDiaryVoice() {
+    stopDictation();
+    diaryDictating = false;
+    var easy = activeDifficulty === 'easy';
+    document.getElementById('diary-voice-row').hidden = !SpeechRec;
+    document.getElementById('diary-text-box').hidden = easy;
+    document.getElementById('diary-mic-btn').classList.remove('listening');
+    document.getElementById('diary-mic-icon').textContent = 'mic';
+    document.getElementById('diary-journal-input').placeholder = isSimplified()
+      ? '按麥克風說說看，也可以自己打字' : '今天發生了什麼事？不用寫很多，真實就好...';
+    setDiaryMicStatus(diaryMicIdleText());
+    updateDiaryReplay();
+  }
+  document.getElementById('diary-mic-btn').addEventListener('click', function () {
+    var input = document.getElementById('diary-journal-input');
+    if (diaryDictating) { stopDictation(); return; }
+    var easy = activeDifficulty === 'easy';
+    var base = easy ? '' : input.value.trim();
+    var btn = document.getElementById('diary-mic-btn');
+    var started = startDictation({
+      onText: function (t) {
+        input.value = (base ? base + ' ' : '') + t;
+        input.dispatchEvent(new Event('input'));
+      },
+      onEnd: function (err) {
+        diaryDictating = false;
+        btn.classList.remove('listening');
+        document.getElementById('diary-mic-icon').textContent = 'mic';
+        if (err === 'not-allowed' || err === 'service-not-allowed') {
+          setDiaryMicStatus(isSimplified() ? phoneticText('麥克風不能用，請問老師') : '無法使用麥克風，請到瀏覽器設定允許使用，或直接打字');
+        } else if (err === 'no-speech') {
+          setDiaryMicStatus(isSimplified() ? phoneticText('沒有聽到，再試一次') : '沒有聽到聲音，再按一次麥克風試試');
+        } else if (err) {
+          setDiaryMicStatus(isSimplified() ? phoneticText('沒有成功，再試一次') : '語音辨識沒有成功，再試一次，或直接打字');
+        } else if (input.value.trim()) {
+          setDiaryMicStatus(isSimplified() ? phoneticText('錄下來了，再按可以重說') : '已經記下來了，可以修改，或再按一次麥克風補充');
+        } else {
+          setDiaryMicStatus(diaryMicIdleText());
+        }
+        updateDiaryReplay();
+        updateDiarySubmitState();
+      }
+    });
+    if (!started) { setDiaryMicStatus(diaryMicIdleText()); return; }
+    diaryDictating = true;
+    btn.classList.add('listening');
+    document.getElementById('diary-mic-icon').textContent = 'stop';
+    setDiaryMicStatus(isSimplified() ? phoneticText('正在聽…') : '正在聽你說…');
+  });
 
   function renderDiaryMoodPicker() {
     var wrap = document.getElementById('diary-mood-picker');
@@ -589,7 +687,8 @@
     var alreadyToday = state.lastEntryDate === todayStr();
     if (isSimplified()) {
       btn.disabled = alreadyToday || !diarySelectedMood;
-      label.innerHTML = alreadyToday ? phoneticText('今天完成了') : (!diarySelectedMood ? phoneticText('先選一個心情') : phoneticText('完成，得到兩滴甘露'));
+      var hasText = !!document.getElementById('diary-journal-input').value.trim() || (activeDifficulty === 'easy' && !SpeechRec);
+      label.innerHTML = alreadyToday ? phoneticText('今天完成了') : (!diarySelectedMood ? phoneticText('先選一個心情') : (hasText ? phoneticText('完成，得到兩滴甘露') : phoneticText('完成，得到一滴甘露')));
       return;
     }
     if (alreadyToday) {
@@ -616,7 +715,8 @@
         var d = DIARY_SIMPLE[e.mood];
         return '<article class="bg-surface-container-lowest p-space-md rounded-lg shadow-sm flex items-center gap-space-md">' +
           '<span class="text-[40px] leading-none">' + d.emoji + '</span>' +
-          '<span class="text-[22px] text-on-surface font-bold flex-1">' + phoneticText(d.word) + '</span>' +
+          '<span class="text-[22px] text-on-surface font-bold flex-1">' + phoneticText(d.word) +
+          (e.text ? (activeDifficulty === 'medium' ? ' <span class="text-[16px] font-normal text-on-surface-variant">' + escapeHtml(e.text) + '</span>' : ' <span class="material-symbols-outlined text-[20px] align-middle text-primary">mic</span>') : '') + '</span>' +
           '<span class="font-label-sm text-label-sm text-on-surface-variant">' + e.date + '</span>' +
           '<span class="font-label-sm text-label-sm text-tertiary flex items-center flex-shrink-0"><span class="material-symbols-outlined text-[14px]">water_drop</span>+' + e.drops + '</span>' +
           '</article>';
@@ -654,6 +754,7 @@
     renderDiaryMoodPicker();
     document.getElementById('diary-journal-input').value = '';
     document.getElementById('diary-char-count').textContent = '已記錄 0 字';
+    updateDiaryReplay();
     var alreadyToday = state.lastEntryDate === todayStr();
     if (isSimplified()) {
       document.getElementById('diary-stage-badge').textContent = '💧 ' + state.growthStage + ' / 6';
@@ -670,14 +771,17 @@
 
   document.getElementById('diary-journal-input').addEventListener('input', function (e) {
     document.getElementById('diary-char-count').textContent = '已記錄 ' + e.target.value.trim().length + ' 字';
+    updateDiaryReplay();
     updateDiarySubmitState();
   });
 
   document.getElementById('diary-submit-btn').addEventListener('click', function () {
     if (!diarySelectedMood || state.lastEntryDate === todayStr()) return;
     var simple = isSimplified();
-    var text = simple ? '' : document.getElementById('diary-journal-input').value.trim();
-    var drops = simple ? SIMPLE_DIARY_DROPS : 1 + (text.length > 0 ? 1 : 0);
+    stopDictation();
+    var text = document.getElementById('diary-journal-input').value.trim();
+    // 三種難度規則一致：選心情 +1 滴、說（或寫）了小事再 +1 滴。唯一例外：簡單版的瀏覽器不支援語音辨識時，沒辦法輸入，直接給 2 滴
+    var drops = (activeDifficulty === 'easy' && !SpeechRec) ? SIMPLE_DIARY_DROPS : 1 + (text.length > 0 ? 1 : 0);
     state.waterInventory += drops;
     state.diaryEntries.push({ date: todayStr(), mood: diarySelectedMood, text: text, drops: drops });
     state.lastEntryDate = todayStr();

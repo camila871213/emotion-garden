@@ -2,7 +2,17 @@
 
 .view[hidden] { display: none; }
 #profile-gate[hidden], #app-shell[hidden], #profile-difficulty-step[hidden] { display: none !important; }
-#lib-hero-text[hidden], #lib-pick-row[hidden], #lib-detail-section[hidden], #lib-simple[hidden], #diary-step2-card[hidden] { display: none !important; }
+#lib-hero-text[hidden], #lib-pick-row[hidden], #lib-detail-section[hidden], #lib-simple[hidden], #diary-step2-card[hidden],
+#diary-voice-row[hidden], #diary-text-box[hidden], #diary-replay-btn[hidden] { display: none !important; }
+#diary-replay-btn:not([hidden]) { display: inline-flex; }
+
+/* 語音輸入：錄音中麥克風變紅並跳動 */
+@keyframes micPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(186, 26, 26, 0.5); }
+  50% { box-shadow: 0 0 0 14px rgba(186, 26, 26, 0); }
+}
+#diary-mic-btn.listening { background: #ba1a1a; animation: micPulse 1.2s ease-out infinite; }
+@media (prefers-reduced-motion: reduce) { #diary-mic-btn.listening { animation: none; } }
 
 /* 呼吸圈動畫 */
 .breath-ring {
