@@ -168,7 +168,11 @@
     if (viewKey === 'diary') renderDiary();
     if (viewKey === 'growth') renderGrowth();
     if (viewKey === 'calm') stopBreathing();
-    if (viewKey === 'library' && !libInitialized) initLibrary();
+    if (viewKey === 'library') {
+      if (!libInitialized) initLibrary();
+      applyLibraryMode(); // 換了學生、難度可能不同，每次進圖書館都重新套用並重畫目前選的精靈
+      selectFruit(libCurrentId || FRUITS[0].id, false);
+    }
     if (viewKey === 'jungle' && !jungleInitialized) initJungle();
   }
 
@@ -1112,9 +1116,68 @@
       ] }
   ];
 
-  function selectFruit(id) {
+  // 簡單／中等難度的圖書館：每個情緒精靈只有三句短話（感覺、需要、可以怎麼做），每句約 10 個字、一個意思，
+  // 用第一人稱、講具體的身體感覺和做法，不需要孩子自己從文字推論。困難難度仍然用上面 FRUITS 的完整長文。
+  var FRUITS_SIMPLE = {
+    durian:       { feeling: '生氣時，心裡像有一團火。', wish: '我需要大家尊重我。',     action: '先深呼吸，再慢慢說。' },
+    coconut:      { feeling: '冷漠時，不想說話。',       wish: '我需要一個安靜的地方。', action: '我可以說：我想休息一下。' },
+    strawberry:   { feeling: '害怕時，心跳變得好快。',   wish: '我需要有人陪著我。',     action: '我可以說：請你陪我。' },
+    passionfruit: { feeling: '焦慮時，腦袋亂亂的。',     wish: '我需要知道要做什麼。',   action: '一件一件，慢慢做。' },
+    watermelon:   { feeling: '快樂時，心裡暖暖的。',     wish: '我想跟大家分享。',       action: '我可以笑一笑，說謝謝。' },
+    lemon:        { feeling: '難過時，心裡酸酸的。',     wish: '我需要有人安慰我。',     action: '我可以說：請你抱抱我。' },
+    greenapple:   { feeling: '嫉妒時，覺得別人比較好。', wish: '我也想被看見。',         action: '我可以說：我也很棒！' },
+    grapefruit:   { feeling: '委屈時，想哭又說不出來。', wish: '我需要有人聽我說。',     action: '我可以說：請你聽我說。' },
+    peach:        { feeling: '得意時，覺得自己很棒。',   wish: '我想聽到大家的掌聲。',   action: '我可以說：謝謝你們！' }
+  };
+
+  var libCurrentId = null;
+
+  function highlightFruitTab(id) {
+    document.querySelectorAll('.lib-tab-btn').forEach(function (btn) {
+      var active = btn.dataset.id === id;
+      btn.classList.toggle('bg-primary', active);
+      btn.classList.toggle('shadow-md', active);
+      btn.classList.toggle('bg-surface-container-low', !active);
+    });
+  }
+
+  // 依難度切換圖書館畫面：簡單／中等隱藏困難版的長文區塊，改顯示簡化版
+  function applyLibraryMode() {
+    var simple = isSimplified();
+    document.getElementById('lib-hero-text').hidden = simple;
+    document.getElementById('lib-pick-row').hidden = simple;
+    document.getElementById('lib-detail-section').hidden = simple;
+    document.getElementById('lib-simple').hidden = !simple;
+    // 隱藏標題後，精靈按鈕上方不需要再留那麼大的空白
+    var tabsWrap = document.getElementById('lib-fruit-tabs').parentElement;
+    tabsWrap.classList.toggle('mt-space-xl', !simple);
+    tabsWrap.classList.toggle('pt-space-lg', !simple);
+  }
+
+  function renderLibrarySimple(f, speakNow) {
+    var t = FRUITS_SIMPLE[f.id];
+    var spoken = f.emotion + '。' + t.feeling + t.wish + t.action;
+    var rows = [['💭', t.feeling], ['🤲', t.wish], ['💬', t.action]].map(function (r) {
+      return '<div class="flex items-center gap-space-md bg-surface-container-low rounded-xl px-space-md py-space-sm">' +
+        '<span class="text-[40px] leading-none flex-shrink-0">' + r[0] + '</span>' +
+        '<p class="text-[22px] text-on-surface text-left leading-snug">' + phoneticText(r[1]) + '</p></div>';
+    }).join('');
+    document.getElementById('lib-simple-body').innerHTML =
+      '<div class="bg-surface-container-lowest rounded-xl p-space-lg lg:p-space-xl shadow-sm flex flex-col items-center gap-space-lg">' +
+      '<img src="' + f.img + '" alt="' + escapeHtml(f.emotion) + '" class="w-56 h-56 object-contain drop-shadow-md" />' +
+      '<h2 class="text-[34px] font-bold text-primary text-center leading-tight">' + phoneticText(f.emotion) + '</h2>' +
+      '<div class="w-full max-w-xl flex flex-col gap-space-sm">' + rows + '</div>' +
+      '<button type="button" class="simplified-speak-btn flex items-center gap-1.5 px-space-lg py-space-sm rounded-full bg-primary text-on-primary font-label-md text-label-md shadow-md active:scale-95" data-speak="' + escapeHtml(spoken) + '">' +
+      '<span class="material-symbols-outlined text-[22px]">volume_up</span><span>' + phoneticText('播放語音') + '</span></button>' +
+      '</div>';
+    if (speakNow) speak(spoken); // 只在孩子點了精靈按鈕時念（iOS 需要使用者手勢）
+  }
+
+  function selectFruit(id, speakNow) {
     var f = FRUITS.filter(function (x) { return x.id === id; })[0];
     if (!f) return;
+    libCurrentId = id;
+    if (isSimplified()) { renderLibrarySimple(f, speakNow); highlightFruitTab(id); return; }
     document.getElementById('lib-current-tag').textContent = '目前探索：' + f.short;
     document.getElementById('lib-role-text').textContent = f.role;
     document.getElementById('lib-spirit-icon').outerHTML = '<img id="lib-spirit-icon" src="' + f.img + '" alt="' + f.name + '" class="w-full h-full object-contain drop-shadow-md" />';
@@ -1141,12 +1204,7 @@
         '</div></div></div>';
     }).join('');
 
-    document.querySelectorAll('.lib-tab-btn').forEach(function (btn) {
-      var active = btn.dataset.id === id;
-      btn.classList.toggle('bg-primary', active);
-      btn.classList.toggle('shadow-md', active);
-      btn.classList.toggle('bg-surface-container-low', !active);
-    });
+    highlightFruitTab(id);
   }
 
   function initLibrary() {
@@ -1159,9 +1217,9 @@
         '</button>';
     }).join('');
     tabs.querySelectorAll('.lib-tab-btn').forEach(function (btn) {
-      btn.addEventListener('click', function () { selectFruit(btn.dataset.id); });
+      btn.addEventListener('click', function () { selectFruit(btn.dataset.id, true); });
     });
-    selectFruit(FRUITS[0].id);
+    selectFruit(FRUITS[0].id, false);
   }
 
   // ============ 叢林冒險（滿版沉浸式，文字僅作輔助，降低認知負荷） ============
@@ -1356,6 +1414,12 @@
   }
 
   // 左上角固定顯示「第幾關＋處己/處人/處環境分類」（該單元內的第幾關，不是全部 15 關的總編號）
+  function levelText(pos) {
+    if (!isSimplified()) return '第 ' + pos + ' 關';
+    var numerals = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+    return phoneticText('第' + (numerals[pos - 1] || pos) + '關');
+  }
+
   function renderJungleLevelBadge(idx) {
     var badge = document.getElementById('jungle-level-badge');
     if (typeof idx !== 'number') { badge.innerHTML = ''; return; }
@@ -1364,9 +1428,8 @@
     var pos = unitIndices(sc.unit).indexOf(idx) + 1;
     if (isSimplified()) {
       // 簡單／中等：不寫「處己」這種單元名稱（孩子看不懂），只留單元圖示 + 「第一關」，並依難度標上注音
-      var numerals = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
       badge.innerHTML = '<div class="inline-flex items-center gap-2 px-space-md py-1 rounded-full bg-white/25 backdrop-blur-sm text-white text-[22px] leading-tight">' +
-        '<span>' + u.icon + '</span>' + phoneticText('第' + (numerals[pos - 1] || pos) + '關') + '</div>';
+        '<span>' + u.icon + '</span>' + levelText(pos) + '</div>';
       return;
     }
     badge.innerHTML = '<div class="inline-flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-white/25 backdrop-blur-sm text-white font-label-sm text-label-sm">' +
@@ -1406,9 +1469,9 @@
     }, 0);
     var allDone = totalDone === SCENARIOS.length;
     document.getElementById('jungle-content').innerHTML =
-      '<h1 class="font-headline-lg text-headline-lg text-white drop-shadow-lg">叢林冒險</h1>' +
-      '<p class="font-body-md text-body-md text-white/90 drop-shadow">選一個單元開始練習！</p>' +
-      (allDone ? '<div class="inline-flex items-center gap-1.5 px-space-md py-1.5 rounded-full bg-white/90 text-primary font-label-md text-label-md shadow-md">🏆 全部關卡都完成囉！</div>' : '') +
+      '<h1 class="font-headline-lg text-headline-lg text-white drop-shadow-lg">' + phoneticText('叢林冒險') + '</h1>' +
+      '<p class="font-body-md text-body-md text-white/90 drop-shadow">' + phoneticText('選一個單元開始練習！') + '</p>' +
+      (allDone ? '<div class="inline-flex items-center gap-1.5 px-space-md py-1.5 rounded-full bg-white/90 text-primary font-label-md text-label-md shadow-md">🏆 ' + phoneticText('全部關卡都完成囉！') + '</div>' : '') +
       '<div class="flex flex-col sm:flex-row gap-space-md w-full max-w-2xl mt-space-sm">' +
       UNIT_KEYS.map(function (key) {
         var u = UNITS[key];
@@ -1416,8 +1479,8 @@
         var done = indices.filter(function (gi) { return jungleProg(gi).completed; }).length;
         return '<button type="button" data-unit="' + key + '" class="jungle-unit-card flex-1 flex flex-col items-center gap-space-xs px-space-lg py-space-xl rounded-2xl bg-white/95 hover:bg-white shadow-xl transition-all active:scale-95">' +
           '<span class="text-[48px] leading-none">' + u.icon + '</span>' +
-          '<span class="font-headline-sm text-headline-sm text-on-surface">' + u.name + '</span>' +
-          '<span class="font-body-sm text-body-sm text-on-surface-variant text-center">' + u.sub + '</span>' +
+          '<span class="font-headline-sm text-headline-sm text-on-surface">' + phoneticText(u.name) + '</span>' +
+          '<span class="font-body-sm text-body-sm text-on-surface-variant text-center">' + phoneticText(u.sub) + '</span>' +
           '<span class="font-label-md text-label-md text-primary font-bold">' + done + ' / ' + indices.length + ' 已完成</span>' +
           '</button>';
       }).join('') + '</div>';
@@ -1439,10 +1502,10 @@
     document.getElementById('jungle-content').innerHTML =
       '<div class="w-full max-w-2xl">' +
       '<button type="button" id="jungle-back-to-menu" class="inline-flex items-center gap-1 mb-space-sm px-space-md py-1.5 rounded-full bg-white/25 backdrop-blur-sm text-white font-label-sm text-label-sm">' +
-      '<span class="material-symbols-outlined text-[18px]">arrow_back</span>換單元</button>' +
+      '<span class="material-symbols-outlined text-[18px]">arrow_back</span>' + phoneticText('換單元') + '</button>' +
       '<div class="text-[48px] leading-none drop-shadow-lg">' + u.icon + '</div>' +
-      '<h1 class="font-headline-lg text-headline-lg text-white drop-shadow-lg">' + u.name + '</h1>' +
-      '<p class="font-body-md text-body-md text-white/90 drop-shadow mb-space-md">' + u.sub + '</p>' +
+      '<h1 class="font-headline-lg text-headline-lg text-white drop-shadow-lg">' + phoneticText(u.name) + '</h1>' +
+      '<p class="font-body-md text-body-md text-white/90 drop-shadow mb-space-md">' + phoneticText(u.sub) + '</p>' +
       '<div class="grid grid-cols-2 sm:grid-cols-3 gap-space-sm">' +
       indices.map(function (gi, i) {
         var prog = jungleProg(gi);
@@ -1450,8 +1513,8 @@
         var stateCls = prog.completed ? 'bg-white text-on-surface' : unlocked ? 'bg-white/90 text-on-surface hover:bg-white active:scale-95' : 'bg-white/30 text-white/70 cursor-not-allowed';
         return '<button type="button" data-idx="' + gi + '" ' + (unlocked ? '' : 'disabled') + ' class="jungle-level-btn flex flex-col items-center gap-1 px-space-md py-space-lg rounded-xl shadow-lg transition-all ' + stateCls + '">' +
           '<span class="text-[24px] leading-none">' + (prog.completed ? '✅' : unlocked ? '▶️' : '🔒') + '</span>' +
-          '<span class="font-label-md text-label-md font-bold">第 ' + (i + 1) + ' 關</span>' +
-          (prog.completed ? '<span class="text-[12px]">重玩練習</span>' : '') +
+          '<span class="font-label-md text-label-md font-bold">' + levelText(i + 1) + '</span>' +
+          (prog.completed ? '<span class="text-[12px]">' + phoneticText('重玩練習') + '</span>' : '') +
           '</button>';
       }).join('') + '</div></div>';
     document.getElementById('jungle-back-to-menu').addEventListener('click', renderJungleMenu);
@@ -1504,13 +1567,13 @@
       // 用 div 而不是 button 當作外層容器，才能在裡面放真正可點擊的「上一格」按鈕
       '<div id="jungle-panel-frame" class="relative w-full max-w-md sm:max-w-xl rounded-2xl border-4 border-white/80 bg-surface-container shadow-2xl flex flex-col items-center justify-center gap-space-md p-space-xl transition-all active:scale-[0.98] cursor-pointer select-none" style="touch-action: pan-y;">' +
       '<span class="absolute top-4 left-4 px-space-md py-1 rounded-full bg-white/90 text-on-surface font-label-md text-label-md font-bold">' + (junglePanelIndex + 1) + ' / ' + sc.panels.length + '</span>' +
-      (tag ? '<span class="absolute top-4 right-4 px-space-md py-1 rounded-full font-label-md text-label-md font-bold" style="background:' + tag.bg + ';color:' + tag.color + ';">' + tag.label + '</span>' : '') +
+      (tag ? '<span class="absolute top-4 right-4 px-space-md py-1 rounded-full font-label-md text-label-md font-bold" style="background:' + tag.bg + ';color:' + tag.color + ';">' + phoneticText(tag.label) + '</span>' : '') +
       visualHtml +
       '<div class="w-full max-w-md min-h-[4.5rem] flex items-center justify-center bg-white/95 rounded-xl px-space-lg py-space-md shadow-md">' +
       '<p class="font-headline-md text-headline-md text-on-surface text-center leading-relaxed">' + phoneticText(panel.caption) + '</p>' +
       '</div>' +
-      (isSimplified() && !showVideo ? '<button type="button" class="simplified-speak-btn flex items-center gap-1.5 px-space-lg py-space-sm rounded-full bg-primary text-on-primary font-label-md text-label-md shadow-md active:scale-95" data-speak="' + escapeHtml(panel.caption) + '"><span class="material-symbols-outlined text-[22px]">volume_up</span><span>再聽一次</span></button>' : '') +
-      '<span class="flex items-center gap-1 text-on-surface-variant font-label-md text-label-md pointer-events-none">' + (isLast ? '開始回答' : '滑動或點一下繼續') + ' <span class="material-symbols-outlined text-[22px]">arrow_forward</span></span>' +
+      (isSimplified() && !showVideo ? '<button type="button" class="simplified-speak-btn flex items-center gap-1.5 px-space-lg py-space-sm rounded-full bg-primary text-on-primary font-label-md text-label-md shadow-md active:scale-95" data-speak="' + escapeHtml(panel.caption) + '"><span class="material-symbols-outlined text-[22px]">volume_up</span><span>' + phoneticText('再聽一次') + '</span></button>' : '') +
+      '<span class="flex items-center gap-1 text-on-surface-variant font-label-md text-label-md pointer-events-none">' + phoneticText(isLast ? '開始回答' : '滑動或點一下繼續') + ' <span class="material-symbols-outlined text-[22px]">arrow_forward</span></span>' +
       (canGoBack ? '<button type="button" id="jungle-panel-prev" aria-label="上一格" class="absolute left-3 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/90 hover:bg-white flex items-center justify-center shadow-lg z-10"><span class="material-symbols-outlined text-[26px] text-on-surface">chevron_left</span></button>' : '') +
       '<button type="button" id="jungle-panel-next" aria-label="下一格" class="absolute right-3 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/90 hover:bg-white flex items-center justify-center shadow-lg z-10"><span class="material-symbols-outlined text-[26px] text-on-surface">chevron_right</span></button>' +
       '</div>';
@@ -1575,7 +1638,7 @@
       '<div class="max-w-lg bg-white/95 rounded-xl px-space-lg py-space-md shadow-md"><p class="font-headline-md text-headline-md text-on-surface text-center leading-relaxed">' + phoneticText(sc.scene) + '</p></div>' +
       (sc.cue ? '<div class="max-w-lg bg-white/85 backdrop-blur-sm rounded-xl px-space-lg py-space-sm shadow-md"><p class="font-label-lg text-label-lg text-on-surface text-center leading-relaxed">' + phoneticText(sc.cue) + '</p></div>' : '') +
       '<div class="inline-flex bg-primary rounded-xl px-space-lg py-space-sm shadow-lg"><p class="font-headline-sm text-headline-sm text-on-primary text-center font-bold">❓ ' + phoneticText(u.prompt) + '</p></div>' +
-      (isSimplified() ? '<button type="button" class="simplified-speak-btn flex items-center gap-1.5 px-space-lg py-space-sm rounded-full bg-primary text-on-primary font-label-md text-label-md shadow-md active:scale-95" data-speak="' + escapeHtml(sc.scene + '。' + (sc.cue ? sc.cue + '。' : '') + u.prompt + '。' + order.map(function (oi) { return sc.options[oi].label; }).join('。')) + '"><span class="material-symbols-outlined text-[22px]">volume_up</span><span>再聽一次</span></button>' : '') +
+      (isSimplified() ? '<button type="button" class="simplified-speak-btn flex items-center gap-1.5 px-space-lg py-space-sm rounded-full bg-primary text-on-primary font-label-md text-label-md shadow-md active:scale-95" data-speak="' + escapeHtml(sc.scene + '。' + (sc.cue ? sc.cue + '。' : '') + u.prompt + '。' + order.map(function (oi) { return sc.options[oi].label; }).join('。')) + '"><span class="material-symbols-outlined text-[22px]">volume_up</span><span>' + phoneticText('再聽一次') + '</span></button>' : '') +
       '<div class="flex flex-col sm:flex-row gap-space-md w-full max-w-lg" id="jungle-options">' +
       order.map(function (oi) {
         var o = sc.options[oi];
@@ -1584,7 +1647,7 @@
           (isOut ? 'bg-white/40 opacity-40 grayscale cursor-not-allowed' : 'bg-white/90 hover:bg-white active:scale-95') + '">' +
           '<span class="text-[56px] leading-none">' + o.emoji + '</span>' +
           '<span class="font-label-lg text-label-lg text-on-surface text-center">' + phoneticText(o.label) + '</span>' +
-          (isOut ? '<span class="text-[13px] text-on-surface-variant">已經試過囉</span>' : '') +
+          (isOut ? '<span class="text-[13px] text-on-surface-variant">' + phoneticText('已經試過囉') + '</span>' : '') +
           '</button>';
       }).join('') + '</div>' +
       '<div id="jungle-feedback" class="min-h-[3rem]"></div>';
@@ -1615,8 +1678,8 @@
             '<span class="font-label-md text-label-md text-on-surface">' + phoneticText(choice.feedback) + '</span></div>' +
             '<div class="mt-space-sm flex flex-col items-center gap-space-xs">' +
             '<button type="button" id="jungle-next-btn" class="px-space-lg h-14 rounded-full bg-primary text-on-primary font-label-md text-label-md shadow-xl">' +
-            (nextIdx !== null ? '下一關 →' : '🎉 完成單元') + '</button>' +
-            '<button type="button" id="jungle-back-list-btn" class="font-label-sm text-label-sm text-white/90 underline underline-offset-2">回關卡列表</button>' +
+            (nextIdx !== null ? phoneticText('下一關') + ' →' : '🎉 ' + phoneticText('完成單元')) + '</button>' +
+            '<button type="button" id="jungle-back-list-btn" class="font-label-sm text-label-sm text-white/90 underline underline-offset-2">' + phoneticText('回關卡列表') + '</button>' +
             '</div>';
           document.getElementById('jungle-next-btn').addEventListener('click', function () {
             jungleAnswered = false;
@@ -1635,9 +1698,9 @@
           if (isSimplified()) speak(fairy.fairyName + '飛來幫忙。' + choice.feedback);
           fb.innerHTML = '<div class="flex items-center gap-space-sm px-space-md py-space-sm rounded-2xl bg-white/95 shadow-xl text-left max-w-sm mx-auto">' +
             '<img src="' + fairy.fairyImg + '" alt="' + fairy.fairyName + '" class="w-14 h-14 object-contain flex-shrink-0 fairy-float" />' +
-            '<div><p class="font-label-sm text-label-sm text-primary font-bold">' + fairy.fairyName + ' 飛來幫忙！</p>' +
+            '<div><p class="font-label-sm text-label-sm text-primary font-bold">' + phoneticText(fairy.fairyName) + ' ' + phoneticText('飛來幫忙！') + '</p>' +
             '<p class="font-body-sm text-body-sm text-on-surface">' + phoneticText(choice.feedback) + '</p></div></div>' +
-            '<div class="mt-space-sm"><button type="button" id="jungle-retry-btn" class="px-space-lg h-14 rounded-full bg-white text-on-surface font-label-md text-label-md shadow-xl">🔄 再試一次</button></div>';
+            '<div class="mt-space-sm"><button type="button" id="jungle-retry-btn" class="px-space-lg h-14 rounded-full bg-white text-on-surface font-label-md text-label-md shadow-xl">🔄 ' + phoneticText('再試一次') + '</button></div>';
           document.getElementById('jungle-retry-btn').addEventListener('click', function () {
             jungleAnswered = false;
             renderJungleScenario(idx, nextExcluded); // 重試只重來選擇題，不重播漫畫

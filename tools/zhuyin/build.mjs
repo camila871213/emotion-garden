@@ -53,23 +53,37 @@ const OVERRIDES = {
   '的': 'de5', '了': 'le5', '嗎': 'ma5', '呢': 'ne5', '吧': 'ba5', '們': 'men5', '喔': 'o1',
   // 這份內容裡 pinyin-pro 判斷錯的字
   '著': 'zhe5', '搶': 'qiang3', '嚇': 'xia4', '暈': 'yun1', '調': 'tiao2', '識': 'shi4',
-  '子': 'zi5', '得': 'de5', '地': 'de5', '興': 'xing4'
+  '子': 'zi5', '得': 'de5', '興': 'xing4'
 };
 // 需要依上下文決定讀音的特例：[字, 前後文片段, 拼音]（例如「改變不了」的「了」念 liǎo，不是輕聲）
 const CONTEXT_OVERRIDES = [
-  ['了', '不了', 'liao3'],
-  ['教', '事教', 'jiao1'],   // 故事教我們（動詞「教」念第一聲）
-  ['數', '慢數', 'shu3'],    // 慢慢數數（第一個「數」是動詞，念第三聲）
-  ['西', '東西', 'xi5'],     // 東西（輕聲）
+  // 格式：[字, '前文_後文', 拼音]，底線是這個字的位置
+  ['了', '不_', 'liao3'],   // 改變不了（念 liǎo，不是輕聲）
+  ['教', '事_', 'jiao1'],   // 故事教我們（動詞「教」念第一聲）
+  ['數', '慢_', 'shu3'],    // 慢慢數數（第一個「數」是動詞，念第三聲）
+  ['西', '東_', 'xi5'],     // 東西（輕聲）
+  ['一', '靜_', 'yi1'],     // 靜一靜、笑一笑：字型沒有「一」的輕聲，用預設讀音
+  ['一', '笑_', 'yi1'],
+  ['一', '_件', 'yi2'],     // 一件（一 + 第四聲 → 第二聲）
+  ['地', '靜_', 'de5'],     // 平靜地說（助詞「地」念輕聲；但「地方」「地球」的地念第四聲，所以不能全域指定）
+  ['地', '輕_', 'de5'],
+  ['地', '心_', 'de5'],
+  ['方', '地_', 'fang5'],   // 地方（輕聲）
 ];
 
 // 找出會顯示在簡單／中等難度的文字欄位
 const appJs = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8');
-const fieldRe = /\b(caption|cue|label|feedback|scene|prompt)\s*:\s*(?:'((?:[^'\\]|\\.)*)'|"((?:[^"\\]|\\.)*)")/g;
+const fieldRe = /\b(caption|cue|label|feedback|scene|prompt|name|sub|fairyName|emotion|feeling|wish|action)\s*:\s*(?:'((?:[^'\\]|\\.)*)'|"((?:[^"\\]|\\.)*)")/g;
 const strings = new Set();
 for (const m of appJs.matchAll(fieldRe)) {
   const s = (m[2] ?? m[3]).replace(/\\(.)/g, '$1');
   if (/[一-鿿]/u.test(s)) strings.add(s);
+}
+
+// 直接寫在程式裡的按鈕、提示文字：phoneticText('...') 的字串常數
+for (const m of appJs.matchAll(/phoneticText\(\s*'((?:[^'\\]|\\.)*)'\s*\)/g)) {
+  const s2 = m[1].replace(/\\(.)/g, '$1');
+  if (/[一-鿿]/u.test(s2)) strings.add(s2);
 }
 
 const isHan = (ch) => /[一-鿿]/u.test(ch);
@@ -91,7 +105,11 @@ for (const s of strings) {
     out += ch;
     if (!isHan(ch)) return;
     const ctx = chars.slice(Math.max(0, i - 1), i + 2).join('');
-    const ctxHit = CONTEXT_OVERRIDES.find(([c, frag]) => c === ch && (chars.slice(Math.max(0, i - 1), i + 1).join('') === frag));
+    const ctxHit = CONTEXT_OVERRIDES.find(([c, pat]) => {
+      if (c !== ch) return false;
+      const [pre, post] = pat.split('_');
+      return chars.slice(Math.max(0, i - pre.length), i).join('') === pre && chars.slice(i + 1, i + 1 + post.length).join('') === post;
+    });
     const raw = (ctxHit ? ctxHit[2] : (OVERRIDES[ch] || py[i] || '')).replace(/0$/, '5'); // pinyin-pro 用 0 表示輕聲，p2z 要吃 5
     let target;
     try { target = p2z(raw, { tonemarks: true }).replace(/\s+/g, ''); } catch (e) { return; }

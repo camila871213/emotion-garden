@@ -413,18 +413,21 @@ tailwind.config={darkMode:"class",theme:{extend:{
   <section class="view" data-view="library" id="view-library" hidden>
     <div class="relative w-full max-w-7xl mx-auto px-gutter-mobile lg:px-gutter-desktop py-space-lg space-y-space-xl">
       <section class="relative overflow-hidden bg-surface-container-lowest rounded-xl p-space-lg lg:p-space-2xl shadow-[0_8px_32px_-4px_rgba(74,107,93,0.06)]">
-        <div class="relative z-10 max-w-3xl space-y-space-sm">
+        <div class="relative z-10 max-w-3xl space-y-space-sm" id="lib-hero-text">
           <h1 class="font-headline-lg text-headline-lg text-on-surface leading-tight">每一種情緒，都是心靈果園派來的守護小精靈</h1>
           <p class="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">情緒沒有好壞之分，外殼的刺、硬殼或酸澀，都是果實保護柔軟內心的小警報，溫柔地提醒我們：「此刻，我的內心真正需要什麼？」</p>
         </div>
         <div class="mt-space-xl pt-space-lg">
-          <div class="flex items-center justify-between mb-space-md flex-wrap gap-space-xs">
+          <div class="flex items-center justify-between mb-space-md flex-wrap gap-space-xs" id="lib-pick-row">
             <span class="font-label-md text-label-md text-on-surface-variant flex items-center gap-space-xxs"><span class="material-symbols-outlined text-[18px] text-primary">psychology</span> 點擊心靈果實，探索情緒背後的防護與需要：</span>
             <span class="font-label-sm text-label-sm text-primary font-bold bg-primary-fixed/30 px-space-sm py-0.5 rounded-full" id="lib-current-tag">目前探索：生氣 · 榴槤寶</span>
           </div>
           <div class="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-space-xs" id="lib-fruit-tabs"></div>
         </div>
       </section>
+
+      <!-- 簡單／中等難度：只有一張圖、三句短話、語音，取代下面困難版的長篇內容 -->
+      <section id="lib-simple" hidden><div id="lib-simple-body"></div></section>
 
       <section class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start" id="lib-detail-section">
         <div class="lg:col-span-5 flex flex-col gap-space-md">
