@@ -70,17 +70,17 @@ tailwind.config={darkMode:"class",theme:{extend:{
         <circle cx="40" cy="22" r="3" fill="#DFA89B"/>
       </svg>
       <div class="flex flex-col">
-        <span class="font-headline-sm text-headline-sm text-primary leading-none">心靈植癒園</span>
-        <span class="font-label-sm text-label-sm text-on-surface-variant mt-space-xxs">今天的心情花園</span>
+        <span class="font-headline-sm text-headline-sm text-primary leading-none" data-zy="心靈植癒園">心靈植癒園</span>
+        <span class="font-label-sm text-label-sm text-on-surface-variant mt-space-xxs" data-zy="">今天的心情花園</span>
       </div>
     </div>
     <nav class="hidden md:flex items-center gap-space-xs bg-surface-container-low p-space-xxs rounded-full" id="main-nav">
-      <a class="nav-link px-space-md py-space-xs rounded-full font-label-md text-label-md transition-all duration-200" data-view="garden" href="#garden">我的心靈花園</a>
-      <a class="nav-link px-space-md py-space-xs rounded-full font-label-md text-label-md transition-all duration-200" data-view="diary" href="#diary">情緒澆灌日記</a>
-      <a class="nav-link px-space-md py-space-xs rounded-full font-label-md text-label-md transition-all duration-200" data-view="growth" href="#growth">成長六階圖鑑</a>
-      <a class="nav-link px-space-md py-space-xs rounded-full font-label-md text-label-md transition-all duration-200" data-view="calm" href="#calm">靜心呼吸小島</a>
-      <a class="nav-link px-space-md py-space-xs rounded-full font-label-md text-label-md transition-all duration-200" data-view="library" href="#library">智慧圖書館</a>
-      <a class="nav-link px-space-md py-space-xs rounded-full font-label-md text-label-md transition-all duration-200" data-view="jungle" href="#jungle">叢林冒險</a>
+      <a class="nav-link px-space-md py-space-xs rounded-full font-label-md text-label-md transition-all duration-200" data-view="garden" href="#garden" data-zy="花園">我的心靈花園</a>
+      <a class="nav-link px-space-md py-space-xs rounded-full font-label-md text-label-md transition-all duration-200" data-view="diary" href="#diary" data-zy="日記">情緒澆灌日記</a>
+      <a class="nav-link px-space-md py-space-xs rounded-full font-label-md text-label-md transition-all duration-200" data-view="growth" href="#growth" data-zy="圖鑑">成長六階圖鑑</a>
+      <a class="nav-link px-space-md py-space-xs rounded-full font-label-md text-label-md transition-all duration-200" data-view="calm" href="#calm" data-zy="呼吸">靜心呼吸小島</a>
+      <a class="nav-link px-space-md py-space-xs rounded-full font-label-md text-label-md transition-all duration-200" data-view="library" href="#library" data-zy="圖書館">智慧圖書館</a>
+      <a class="nav-link px-space-md py-space-xs rounded-full font-label-md text-label-md transition-all duration-200" data-view="jungle" href="#jungle" data-zy="叢林">叢林冒險</a>
     </nav>
     <div class="flex items-center gap-space-xs">
       <button type="button" id="profile-switch-btn" class="flex items-center gap-1.5 pl-1.5 pr-space-sm h-10 rounded-full bg-surface-container-low hover:bg-surface-container-high transition-colors" title="切換使用者">
@@ -98,18 +98,18 @@ tailwind.config={darkMode:"class",theme:{extend:{
       </button>
       <div class="flex items-center gap-space-xxs px-space-sm py-space-xxs rounded-full bg-tertiary-fixed text-on-tertiary-fixed">
         <span class="material-symbols-outlined text-[18px] text-tertiary">water_drop</span>
-        <span class="font-label-sm text-label-sm font-bold"><span id="global-dew-count">0</span> 滴甘露</span>
+        <span class="font-label-sm text-label-sm font-bold"><span id="global-dew-count">0</span> <span data-zy="滴甘露">滴甘露</span></span>
       </div>
     </div>
   </div>
   <!-- 手機版導覽 -->
   <nav class="md:hidden flex items-center gap-1 overflow-x-auto px-gutter-mobile pb-space-xs" id="main-nav-mobile">
-    <a class="nav-link-mobile whitespace-nowrap px-space-sm py-space-xxs rounded-full font-label-sm text-label-sm transition-all duration-200" data-view="garden" href="#garden">花園</a>
-    <a class="nav-link-mobile whitespace-nowrap px-space-sm py-space-xxs rounded-full font-label-sm text-label-sm transition-all duration-200" data-view="diary" href="#diary">日記</a>
-    <a class="nav-link-mobile whitespace-nowrap px-space-sm py-space-xxs rounded-full font-label-sm text-label-sm transition-all duration-200" data-view="growth" href="#growth">圖鑑</a>
-    <a class="nav-link-mobile whitespace-nowrap px-space-sm py-space-xxs rounded-full font-label-sm text-label-sm transition-all duration-200" data-view="calm" href="#calm">呼吸</a>
-    <a class="nav-link-mobile whitespace-nowrap px-space-sm py-space-xxs rounded-full font-label-sm text-label-sm transition-all duration-200" data-view="library" href="#library">圖書館</a>
-    <a class="nav-link-mobile whitespace-nowrap px-space-sm py-space-xxs rounded-full font-label-sm text-label-sm transition-all duration-200" data-view="jungle" href="#jungle">叢林</a>
+    <a class="nav-link-mobile whitespace-nowrap px-space-sm py-space-xxs rounded-full font-label-sm text-label-sm transition-all duration-200" data-view="garden" href="#garden" data-zy="花園">花園</a>
+    <a class="nav-link-mobile whitespace-nowrap px-space-sm py-space-xxs rounded-full font-label-sm text-label-sm transition-all duration-200" data-view="diary" href="#diary" data-zy="日記">日記</a>
+    <a class="nav-link-mobile whitespace-nowrap px-space-sm py-space-xxs rounded-full font-label-sm text-label-sm transition-all duration-200" data-view="growth" href="#growth" data-zy="圖鑑">圖鑑</a>
+    <a class="nav-link-mobile whitespace-nowrap px-space-sm py-space-xxs rounded-full font-label-sm text-label-sm transition-all duration-200" data-view="calm" href="#calm" data-zy="呼吸">呼吸</a>
+    <a class="nav-link-mobile whitespace-nowrap px-space-sm py-space-xxs rounded-full font-label-sm text-label-sm transition-all duration-200" data-view="library" href="#library" data-zy="圖書館">圖書館</a>
+    <a class="nav-link-mobile whitespace-nowrap px-space-sm py-space-xxs rounded-full font-label-sm text-label-sm transition-all duration-200" data-view="jungle" href="#jungle" data-zy="叢林">叢林</a>
   </nav>
 </header>
 
@@ -125,20 +125,20 @@ tailwind.config={darkMode:"class",theme:{extend:{
             <span class="material-symbols-outlined text-[32px]" id="garden-stage-icon" style="font-variation-settings: 'FILL' 1;">potted_plant</span>
           </div>
           <div class="flex flex-col min-w-0">
-            <span class="font-headline-md text-headline-md text-primary tracking-tight">歡迎回來！</span>
-            <p class="font-body-md text-body-md text-on-surface-variant mt-0.5" id="garden-welcome-msg">今天的小樹正在靜靜聆聽你的心聲，慢慢來，我們都在。</p>
+            <span class="font-headline-md text-headline-md text-primary tracking-tight" data-zy="歡迎回來！">歡迎回來！</span>
+            <p class="font-body-md text-body-md text-on-surface-variant mt-0.5" id="garden-welcome-msg" data-zy="小樹在等你，慢慢來。" data-zy-speak>今天的小樹正在靜靜聆聽你的心聲，慢慢來，我們都在。</p>
           </div>
         </div>
         <div class="flex items-center gap-space-sm bg-surface-container-low px-space-md py-space-xs rounded-full self-start md:self-auto shadow-sm">
           <div class="flex flex-col">
-            <span class="font-label-sm text-label-sm text-on-surface-variant">心靈小樹生長</span>
+            <span class="font-label-sm text-label-sm text-on-surface-variant" data-zy="小樹長大了">心靈小樹生長</span>
             <span class="font-label-md text-label-md text-primary font-bold" id="garden-stage-label">第 0 階 · 空陶盆</span>
           </div>
           <div class="w-px h-8 bg-surface-variant"></div>
           <div class="flex items-center gap-1.5 text-tertiary">
             <span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">water_drop</span>
             <span class="font-headline-sm text-headline-sm leading-none font-bold" id="garden-dew-count">0</span>
-            <span class="font-label-sm text-label-sm text-on-surface-variant">滴甘露</span>
+            <span class="font-label-sm text-label-sm text-on-surface-variant" data-zy="滴甘露">滴甘露</span>
           </div>
         </div>
       </header>
@@ -152,7 +152,7 @@ tailwind.config={darkMode:"class",theme:{extend:{
             <div class="w-full flex items-center justify-between z-10">
               <div class="flex items-center gap-space-xs bg-surface/80 backdrop-blur px-space-md py-1.5 rounded-full shadow-sm">
                 <span class="w-2.5 h-2.5 rounded-full bg-primary animate-pulse"></span>
-                <span class="font-label-sm text-label-sm text-primary">小樹正在等待你的心情</span>
+                <span class="font-label-sm text-label-sm text-primary" data-zy="小樹在等你">小樹正在等待你的心情</span>
               </div>
               <div class="flex items-center gap-space-xs bg-surface/80 backdrop-blur px-space-md py-1.5 rounded-full shadow-sm">
                 <span class="font-label-sm text-label-sm text-on-surface-variant" id="garden-progress-text">0 / 6 滴</span>
@@ -162,7 +162,7 @@ tailwind.config={darkMode:"class",theme:{extend:{
             <div class="relative w-full max-w-sm my-auto flex flex-col items-center justify-center z-10 select-none py-space-md">
               <div class="absolute -top-10 opacity-0 pointer-events-none flex flex-col items-center" id="dew-drop-fx">
                 <span class="material-symbols-outlined text-tertiary text-[40px]" style="font-variation-settings: 'FILL' 1;">water_drop</span>
-                <span class="font-label-sm text-tertiary font-bold bg-tertiary-fixed/90 px-3 py-1 rounded-full shadow-sm">+1 滴情緒養分</span>
+                <span class="font-label-sm text-tertiary font-bold bg-tertiary-fixed/90 px-3 py-1 rounded-full shadow-sm" data-zy="一滴甘露">+1 滴情緒養分</span>
               </div>
               <div class="relative flex items-center justify-center w-56 h-56 rounded-full bg-surface-container-low shadow-inner" id="plant-visual-wrapper">
                 <span class="material-symbols-outlined text-primary" id="plant-visual-icon" style="font-size:120px; font-variation-settings: 'FILL' 1;">potted_plant</span>
@@ -174,7 +174,7 @@ tailwind.config={darkMode:"class",theme:{extend:{
 
             <button class="w-full h-16 rounded-full bg-primary hover:bg-primary-container text-on-primary font-label-lg text-label-lg flex items-center justify-center gap-space-xs shadow-md transition-all active:translate-y-1 z-10" id="water-plant-btn" type="button">
               <span class="material-symbols-outlined text-[26px]" style="font-variation-settings: 'FILL' 1;">opacity</span>
-              <span>澆灌一滴水，滋潤心靈花園</span>
+              <span data-zy="澆水給小樹">澆灌一滴水，滋潤心靈花園</span>
             </button>
           </div>
 
@@ -183,8 +183,8 @@ tailwind.config={darkMode:"class",theme:{extend:{
               <span class="material-symbols-outlined text-[24px]">favorite</span>
             </div>
             <div class="flex flex-col">
-              <span class="font-label-md text-label-md text-on-secondary-fixed-variant font-bold">心理師小植物私語</span>
-              <p class="font-body-md text-body-md text-on-surface mt-1 leading-relaxed">
+              <span class="font-label-md text-label-md text-on-secondary-fixed-variant font-bold" data-zy="小樹說">心理師小植物私語</span>
+              <p class="font-body-md text-body-md text-on-surface mt-1 leading-relaxed" data-zy="生氣和難過也沒關係，每一種心情都會讓你長大。" data-zy-speak>
                 「生氣和難過也是植物生長不可或缺的甘露雨水哦！每一種真實被看見的情緒，都在悄悄滋養你的內心花園。」
               </p>
             </div>
@@ -195,8 +195,8 @@ tailwind.config={darkMode:"class",theme:{extend:{
           <div class="w-full bg-surface-container-lowest rounded-xl p-space-md lg:p-space-lg shadow-sm flex flex-col gap-space-md">
             <div class="flex items-center justify-between">
               <div>
-                <h2 class="font-headline-sm text-headline-sm text-primary">此刻的情緒天空</h2>
-                <p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">先感受一下，等等再到「情緒澆灌日記」記錄它：</p>
+                <h2 class="font-headline-sm text-headline-sm text-primary" data-zy="現在心情怎麼樣？">此刻的情緒天空</h2>
+                <p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5" data-zy="">先感受一下，等等再到「情緒澆灌日記」記錄它：</p>
               </div>
               <span class="material-symbols-outlined text-on-surface-variant text-[22px]">psychology_alt</span>
             </div>
@@ -209,8 +209,8 @@ tailwind.config={darkMode:"class",theme:{extend:{
                 <span class="material-symbols-outlined text-[28px]">edit_note</span>
               </div>
               <div class="flex flex-col min-w-0">
-                <span class="font-headline-sm text-headline-sm text-on-surface">前往情緒澆灌日記</span>
-                <p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">記錄今天的心情，最多可以獲得 2 滴甘露</p>
+                <span class="font-headline-sm text-headline-sm text-on-surface" data-zy="去寫心情日記">前往情緒澆灌日記</span>
+                <p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5" data-zy="">記錄今天的心情，最多可以獲得 2 滴甘露</p>
               </div>
             </div>
             <span class="material-symbols-outlined text-[20px] text-on-surface-variant group-hover:text-primary">arrow_forward</span>
@@ -221,8 +221,8 @@ tailwind.config={darkMode:"class",theme:{extend:{
                 <span class="material-symbols-outlined text-[28px]">self_improvement</span>
               </div>
               <div class="flex flex-col min-w-0">
-                <span class="font-headline-sm text-headline-sm text-on-surface">深呼吸放鬆小島</span>
-                <p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">跟著呼吸圈，把緊繃的肩膀慢慢放軟</p>
+                <span class="font-headline-sm text-headline-sm text-on-surface" data-zy="去深呼吸">深呼吸放鬆小島</span>
+                <p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5" data-zy="">跟著呼吸圈，把緊繃的肩膀慢慢放軟</p>
               </div>
             </div>
             <span class="material-symbols-outlined text-[20px] text-on-surface-variant group-hover:text-secondary">arrow_forward</span>
@@ -234,9 +234,9 @@ tailwind.config={darkMode:"class",theme:{extend:{
       <section class="w-full bg-surface-container-lowest rounded-xl p-space-md lg:p-space-lg shadow-sm space-y-space-sm">
         <div class="flex items-center justify-between flex-wrap gap-space-xs">
           <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-space-xs">
-            <span class="material-symbols-outlined text-[22px]">forest</span> 花園居民
+            <span class="material-symbols-outlined text-[22px]">forest</span> <span data-zy="花園裡的朋友">花園居民</span>
           </h2>
-          <span class="font-label-sm text-label-sm text-on-surface-variant">點一下和他們打招呼</span>
+          <span class="font-label-sm text-label-sm text-on-surface-variant" data-zy="點一下，打招呼">點一下和他們打招呼</span>
         </div>
         <div id="meadow-stage" class="relative w-full h-[300px] sm:h-[380px] rounded-xl overflow-hidden shadow-inner" style="background: linear-gradient(to bottom, #d7f0ee 0%, #d7f0ee 52%, #bfe3ad 52%, #8fc97a 100%);">
           <div class="absolute rounded-full bg-white/70" style="width:70px;height:24px; left:8%; top:10%;"></div>
@@ -349,17 +349,17 @@ tailwind.config={darkMode:"class",theme:{extend:{
       <div class="relative overflow-hidden rounded-xl bg-surface-container-low shadow-sm p-space-lg lg:p-space-2xl">
         <div class="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-space-xl">
           <div class="max-w-2xl">
-            <h1 class="font-headline-lg text-headline-lg text-primary mb-space-xs flex items-center gap-space-xs"><span>🪴</span> 成長六階與情緒守護植物精靈圖鑑</h1>
-            <p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">每累積澆灌 6 次真實情緒，小樹就會依據你的心靈養分喚醒專屬「植物守護精靈」！</p>
+            <h1 class="font-headline-lg text-headline-lg text-primary mb-space-xs flex items-center gap-space-xs"><span>🪴</span> <span data-zy="小樹成長圖鑑">成長六階與情緒守護植物精靈圖鑑</span></h1>
+            <p class="font-body-md text-body-md text-on-surface-variant leading-relaxed" data-zy="澆六次水，小樹就會長出花仙子。" data-zy-speak>每累積澆灌 6 次真實情緒，小樹就會依據你的心靈養分喚醒專屬「植物守護精靈」！</p>
           </div>
           <div class="flex flex-wrap sm:flex-nowrap items-center gap-space-sm w-full lg:w-auto">
             <div class="flex-1 lg:flex-none p-space-md rounded-lg bg-surface-container-lowest shadow-sm flex items-center gap-space-sm min-w-[170px]">
               <div class="w-12 h-12 rounded-full bg-primary-fixed flex items-center justify-center text-primary"><span class="material-symbols-outlined text-[26px]">auto_awesome</span></div>
-              <div><span class="font-label-sm text-label-sm text-on-surface-variant block">已喚醒守護精靈</span><span class="font-headline-sm text-headline-sm text-primary font-bold" id="growth-unlocked-count">0 / 5 隻</span></div>
+              <div><span class="font-label-sm text-label-sm text-on-surface-variant block" data-zy="花仙子朋友">已喚醒守護精靈</span><span class="font-headline-sm text-headline-sm text-primary font-bold" id="growth-unlocked-count">0 / 5 隻</span></div>
             </div>
             <div class="flex-1 lg:flex-none p-space-md rounded-lg bg-surface-container-lowest shadow-sm flex items-center gap-space-sm min-w-[170px]">
               <div class="w-12 h-12 rounded-full bg-secondary-fixed flex items-center justify-center text-secondary"><span class="material-symbols-outlined text-[26px]">local_florist</span></div>
-              <div><span class="font-label-sm text-label-sm text-on-surface-variant block">累計收成次數</span><span class="font-headline-sm text-headline-sm text-secondary font-bold" id="growth-harvest-count">0 次</span></div>
+              <div><span class="font-label-sm text-label-sm text-on-surface-variant block" data-zy="開花次數">累計收成次數</span><span class="font-headline-sm text-headline-sm text-secondary font-bold" id="growth-harvest-count">0 次</span></div>
             </div>
           </div>
         </div>
@@ -369,15 +369,15 @@ tailwind.config={darkMode:"class",theme:{extend:{
     <section class="max-w-7xl mx-auto w-full px-gutter-mobile lg:px-gutter-desktop pb-space-2xl">
       <div class="flex items-center gap-space-xs mb-space-lg">
         <span class="material-symbols-outlined text-primary text-[24px]">psychology_alt</span>
-        <h2 class="font-headline-md text-headline-md text-on-surface">五大情緒守護植物精靈</h2>
+        <h2 class="font-headline-md text-headline-md text-on-surface" data-zy="五位花仙子">五大情緒守護植物精靈</h2>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-lg" id="fairy-gallery-grid"></div>
     </section>
 
     <section class="w-full bg-surface-container-low py-space-2xl">
       <div class="max-w-7xl mx-auto px-gutter-mobile lg:px-gutter-desktop">
-        <h2 class="font-headline-md text-headline-md text-on-surface mb-space-xs">六階成長軌跡（0 ~ 5 滴水 → 蛻變）</h2>
-        <p class="font-body-sm text-body-sm text-on-surface-variant mb-space-lg">每一次記錄真實感受，都是灌溉心靈種子的珍貴養分</p>
+        <h2 class="font-headline-md text-headline-md text-on-surface mb-space-xs" data-zy="小樹長大六步">六階成長軌跡（0 ~ 5 滴水 → 蛻變）</h2>
+        <p class="font-body-sm text-body-sm text-on-surface-variant mb-space-lg" data-zy="">每一次記錄真實感受，都是灌溉心靈種子的珍貴養分</p>
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-space-md" id="growth-stage-timeline"></div>
       </div>
     </section>
@@ -387,8 +387,8 @@ tailwind.config={darkMode:"class",theme:{extend:{
   <section class="view" data-view="calm" id="view-calm" hidden>
     <div class="w-full max-w-4xl mx-auto px-gutter-mobile lg:px-gutter-desktop py-space-xl space-y-space-xl">
       <div class="text-center space-y-space-xs">
-        <h1 class="font-headline-lg text-headline-lg text-primary flex items-center justify-center gap-space-xs"><span class="material-symbols-outlined text-[32px]">self_improvement</span> 靜心呼吸小島</h1>
-        <p class="font-body-md text-body-md text-on-surface-variant">跟著圈圈慢慢吸氣、慢慢吐氣，讓心情像微風一樣平靜下來。</p>
+        <h1 class="font-headline-lg text-headline-lg text-primary flex items-center justify-center gap-space-xs"><span class="material-symbols-outlined text-[32px]">self_improvement</span> <span data-zy="呼吸小島">靜心呼吸小島</span></h1>
+        <p class="font-body-md text-body-md text-on-surface-variant" data-zy="跟著圈圈，慢慢吸氣，慢慢吐氣。" data-zy-speak>跟著圈圈慢慢吸氣、慢慢吐氣，讓心情像微風一樣平靜下來。</p>
       </div>
 
       <div class="bg-surface-container-lowest rounded-xl p-space-xl shadow-sm flex flex-col items-center gap-space-lg">
@@ -397,13 +397,13 @@ tailwind.config={darkMode:"class",theme:{extend:{
         </div>
         <div class="flex items-center gap-space-md">
           <button class="px-space-lg h-14 rounded-full bg-primary text-on-primary font-label-md text-label-md shadow-md active:translate-y-0.5 transition-all flex items-center gap-space-xs" id="breath-start-btn" type="button">
-            <span class="material-symbols-outlined text-[20px]">play_arrow</span> 開始練習
+            <span class="material-symbols-outlined text-[20px]">play_arrow</span> <span data-zy="開始">開始練習</span>
           </button>
           <button class="px-space-lg h-14 rounded-full bg-surface-container text-on-surface font-label-md text-label-md shadow-sm active:translate-y-0.5 transition-all flex items-center gap-space-xs hidden" id="breath-stop-btn" type="button">
-            <span class="material-symbols-outlined text-[20px]">stop</span> 結束練習
+            <span class="material-symbols-outlined text-[20px]">stop</span> <span data-zy="結束">結束練習</span>
           </button>
         </div>
-        <p class="font-body-sm text-body-sm text-on-surface-variant text-center max-w-md" id="breath-hint">按下開始，圈圈放大時慢慢吸氣，圈圈縮小時慢慢吐氣，重複 4~6 次。</p>
+        <p class="font-body-sm text-body-sm text-on-surface-variant text-center max-w-md" id="breath-hint" data-zy="圈圈變大，慢慢吸氣；圈圈變小，慢慢吐氣。" data-zy-speak>按下開始，圈圈放大時慢慢吸氣，圈圈縮小時慢慢吐氣，重複 4~6 次。</p>
       </div>
 
       <article class="w-full bg-primary-fixed/30 rounded-xl p-space-lg flex items-start gap-space-md shadow-sm">
@@ -411,8 +411,8 @@ tailwind.config={darkMode:"class",theme:{extend:{
           <span class="material-symbols-outlined text-[24px]">tips_and_updates</span>
         </div>
         <div class="flex flex-col">
-          <span class="font-label-md text-label-md text-on-primary-fixed-variant font-bold">小提醒</span>
-          <p class="font-body-md text-body-md text-on-surface mt-1 leading-relaxed">
+          <span class="font-label-md text-label-md text-on-primary-fixed-variant font-bold" data-zy="小提醒">小提醒</span>
+          <p class="font-body-md text-body-md text-on-surface mt-1 leading-relaxed" data-zy="生氣、緊張，或是太吵的時候，來這裡深呼吸。" data-zy-speak>
             當你覺得生氣、緊張或吵鬧的環境讓你不舒服時，都可以來這裡做幾次深呼吸，幫大腦按下暫停鍵。
           </p>
         </div>

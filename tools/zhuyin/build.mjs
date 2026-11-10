@@ -53,7 +53,8 @@ const OVERRIDES = {
   '的': 'de5', '了': 'le5', '嗎': 'ma5', '呢': 'ne5', '吧': 'ba5', '們': 'men5', '喔': 'o1',
   // 這份內容裡 pinyin-pro 判斷錯的字
   '著': 'zhe5', '搶': 'qiang3', '嚇': 'xia4', '暈': 'yun1', '調': 'tiao2', '識': 'shi4',
-  '子': 'zi5', '得': 'de5', '興': 'xing4'
+  '子': 'zi5', '得': 'de5', '興': 'xing4',
+  '還': 'hai2'  // pinyin-pro 判成 huan2
 };
 // 需要依上下文決定讀音的特例：[字, 前後文片段, 拼音]（例如「改變不了」的「了」念 liǎo，不是輕聲）
 const CONTEXT_OVERRIDES = [
@@ -72,11 +73,16 @@ const CONTEXT_OVERRIDES = [
   ['得', '_到', 'de2'],     // 得到（全域指定 de5 是給「覺得、變得」這類補語用）
   ['重', '_說', 'chong2'],  // 重說（再說一次，念 chóng）
   ['重', '_玩', 'chong2'],  // 重玩
+  ['得', '_意', 'de2'],     // 得意
+  ['長', '_大', 'zhang3'],  // 長大（pinyin-pro 判成 chang2）
+  ['長', '_出', 'zhang3'],  // 長出
+  ['長', '成_', 'zhang3'],  // 成長
+  ['種', '_下', 'zhong4'],  // 種下（動詞）
 ];
 
 // 找出會顯示在簡單／中等難度的文字欄位
 const appJs = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8');
-const fieldRe = /\b(caption|cue|label|feedback|scene|prompt|name|sub|fairyName|emotion|feeling|wish|action|word)\s*:\s*(?:'((?:[^'\\]|\\.)*)'|"((?:[^"\\]|\\.)*)")/g;
+const fieldRe = /\b(caption|cue|label|feedback|scene|prompt|name|sub|fairyName|emotion|feeling|wish|action|word|simple\w*)\s*:\s*(?:'((?:[^'\\]|\\.)*)'|"((?:[^"\\]|\\.)*)")/g;
 const strings = new Set();
 for (const m of appJs.matchAll(fieldRe)) {
   const s = (m[2] ?? m[3]).replace(/\\(.)/g, '$1');
@@ -87,6 +93,17 @@ for (const m of appJs.matchAll(fieldRe)) {
 for (const m of appJs.matchAll(/phoneticText\(\s*'((?:[^'\\]|\\.)*)'\s*\)/g)) {
   const s2 = m[1].replace(/\\(.)/g, '$1');
   if (/[一-鿿]/u.test(s2)) strings.add(s2);
+}
+
+// index.html 裡標了 data-zy="..." 的固定文字（導覽列、各頁標題等）
+const htmlText = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+for (const m of htmlText.matchAll(/data-zy="([^"]*)"/g)) {
+  if (/[一-鿿]/u.test(m[1])) strings.add(m[1]);
+}
+// 寫成陣列的台詞（花園居民打招呼、點角色冒出的泡泡）
+for (const name of ['RESIDENT_GREETINGS', 'REACTION_LINES']) {
+  const am = appJs.match(new RegExp('var ' + name + ' = \\[(.*?)\\];', 's'));
+  if (am) for (const sm of am[1].matchAll(/'((?:[^'\\]|\\.)*)'/g)) strings.add(sm[1].replace(/\\(.)/g, '$1'));
 }
 
 const isHan = (ch) => /[一-鿿]/u.test(ch);

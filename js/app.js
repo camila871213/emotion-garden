@@ -7,35 +7,40 @@
     sunny:  { label: '快樂日光', sub: '明亮溫暖',   icon: 'wb_sunny',      fill: true,  swatch: 'bg-secondary-fixed text-secondary',
               fairyName: '向日葵仙子', fairyImg: 'assets/fairies/sunny.png', fairyMeadowImg: 'assets/fairies/sunny-jump.png',
               skillName: '分享光芒', skillDesc: '能在社交情境中提升團隊氛圍，化解同儕間的尷尬與冷場。',
-              fairyDesc: '圓潤發光的幾何小精靈身軀，環繞向日葵花瓣光環，象徵溫暖晴朗與無拘無束的活力。' },
+              fairyDesc: '圓潤發光的幾何小精靈身軀，環繞向日葵花瓣光環，象徵溫暖晴朗與無拘無束的活力。',
+              simpleDesc: '圓圓亮亮，像小太陽。', simpleSkill: '分享快樂', simpleSkillDesc: '把快樂分給朋友，大家都會笑。' },
     storm:  { label: '生氣雷雨', sub: '熱烈爆發',   icon: 'thunderstorm',  fill: false, swatch: 'bg-error-container text-error',
               fairyName: '仙人掌仙子', fairyImg: 'assets/fairies/storm.png', fairyMeadowImg: 'assets/fairies/storm-jump.png',
               skillName: '建立邊界', skillDesc: '面對不公或邊界侵犯時，能勇敢且平靜地表達底線。',
-              fairyDesc: '圓滾堅毅的仙人掌球體精靈，頂端盛開一朵堅強玫瑰，帶有保護自我的溫和盾牌。' },
+              fairyDesc: '圓滾堅毅的仙人掌球體精靈，頂端盛開一朵堅強玫瑰，帶有保護自我的溫和盾牌。',
+              simpleDesc: '身上有刺，是在保護自己。', simpleSkill: '說出不要', simpleSkillDesc: '有人讓我生氣，我可以慢慢說：我不喜歡。' },
     rain:   { label: '憂鬱陰雨', sub: '想靜一靜',   icon: 'rainy',         fill: true,  swatch: 'bg-tertiary-fixed text-tertiary',
               fairyName: '藍鈴花仙子', fairyImg: 'assets/fairies/rain.png', fairyMeadowImg: 'assets/fairies/rain-jump.png',
               skillName: '同理陪伴', skillDesc: '安靜傾聽受傷與難過，在不急躁的陪伴中化解冰冷。',
-              fairyDesc: '宛如清透水滴與倒掛藍鈴花蕾的水之精靈，晶瑩澄澈，溫柔接納所有失落與淚水。' },
+              fairyDesc: '宛如清透水滴與倒掛藍鈴花蕾的水之精靈，晶瑩澄澈，溫柔接納所有失落與淚水。',
+              simpleDesc: '像一滴水，會溫柔陪著難過的人。', simpleSkill: '陪伴朋友', simpleSkillDesc: '朋友難過時，我可以坐在他旁邊。' },
     breeze: { label: '平靜微風', sub: '放鬆舒服',   icon: 'air',           fill: false, swatch: 'bg-primary-fixed text-primary',
               fairyName: '四葉草仙子', fairyImg: 'assets/fairies/breeze.png', fairyMeadowImg: 'assets/fairies/breeze-jump.png',
               hatchFrames: { dir: 'assets/hatch/breeze', count: 56, fps: 12 },
               skillName: '深呼吸防護', skillDesc: '面對環境感官過載時，創造安定呼吸的心靈淨化場域。',
-              fairyDesc: '舒展平穩的四葉草精靈，自然發散微風氣息，提醒我們在喧鬧環境中安頓心靈節奏。' },
+              fairyDesc: '舒展平穩的四葉草精靈，自然發散微風氣息，提醒我們在喧鬧環境中安頓心靈節奏。',
+              simpleDesc: '像微風，讓人慢慢安靜下來。', simpleSkill: '深呼吸', simpleSkillDesc: '很吵或很緊張時，我可以深呼吸。' },
     fog:    { label: '害怕迷霧', sub: '有些不知所措', icon: 'foggy',       fill: false, swatch: 'bg-surface-container-high text-outline',
               fairyName: '含羞草仙子', fairyImg: 'assets/fairies/fog.png', fairyMeadowImg: 'assets/fairies/fog-jump.png',
               skillName: '危機警報', skillDesc: '引導覺察環境風險，在超出自身承受時果斷求助。',
-              fairyDesc: '柔軟微縮的淡紫含羞草精靈，羽葉輕環自身，是靈敏警覺的自然安全雷達。' }
+              fairyDesc: '柔軟微縮的淡紫含羞草精靈，羽葉輕環自身，是靈敏警覺的自然安全雷達。',
+              simpleDesc: '小小軟軟，很會發現危險。', simpleSkill: '找人幫忙', simpleSkillDesc: '覺得害怕時，我可以去找大人幫忙。' }
   };
   var MOOD_ORDER = ['sunny', 'storm', 'rain', 'breeze', 'fog'];
 
   var STAGE_INFO = [
-    { icon: 'potted_plant',   label: '空陶盆',   desc: '等待第一顆情緒種子種下……' },
-    { icon: 'grain',          label: '萌芽種子', desc: '泥土裡開始有了微小的心跳。' },
-    { icon: 'spa',            label: '稚嫩小芽', desc: '探出嫩綠的腦袋張望世界。' },
-    { icon: 'nest_eco_leaf',  label: '茂盛綠葉', desc: '懂得接納多種不同的情緒。' },
-    { icon: 'nature',         label: '強壯枝葉', desc: '內心變得更有韌性與安全感。' },
-    { icon: 'psychology',     label: '神秘花苞', desc: '花瓣緊抱，醞釀精靈守護力。' },
-    { icon: 'auto_awesome',   label: '蛻變開花', desc: '專屬花仙子誕生了！' }
+    { icon: 'potted_plant',   label: '空陶盆',   desc: '等待第一顆情緒種子種下……', simple: '等著種下種子。' },
+    { icon: 'grain',          label: '萌芽種子', desc: '泥土裡開始有了微小的心跳。', simple: '種子醒來了。' },
+    { icon: 'spa',            label: '稚嫩小芽', desc: '探出嫩綠的腦袋張望世界。', simple: '長出小芽了。' },
+    { icon: 'nest_eco_leaf',  label: '茂盛綠葉', desc: '懂得接納多種不同的情緒。', simple: '長出好多葉子。' },
+    { icon: 'nature',         label: '強壯枝葉', desc: '內心變得更有韌性與安全感。', simple: '變得又高又壯。' },
+    { icon: 'psychology',     label: '神秘花苞', desc: '花瓣緊抱，醞釀精靈守護力。', simple: '花苞快要開了。' },
+    { icon: 'auto_awesome',   label: '蛻變開花', desc: '專屬花仙子誕生了！', simple: '花仙子出生了！' }
   ];
 
   // ---------- 使用者檔案（平板共用情境：多位小朋友各自的存檔） ----------
@@ -62,7 +67,10 @@
   }
 
   // 語音輸入（瀏覽器內建語音辨識）：同樣只在點擊事件裡啟動。不支援的瀏覽器（例如 Firefox）會回傳 null，畫面上就不顯示麥克風。
-  var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  // 目前先關閉：Safari／Chrome 的語音辨識會把學生的錄音送到 Apple／Google 處理，正式實驗前要先確認研究倫理與家長同意書的規定。
+  // 要重新開啟時，把 VOICE_INPUT_ENABLED 改成 true 即可（其他程式都已完成並測試過）。
+  var VOICE_INPUT_ENABLED = false;
+  var SpeechRec = VOICE_INPUT_ENABLED ? (window.SpeechRecognition || window.webkitSpeechRecognition) : null;
   var activeRec = null;
   function stopDictation() { if (activeRec) { try { activeRec.stop(); } catch (e) {} } }
   function startDictation(handlers) {
@@ -122,6 +130,24 @@
     if (!isSimplified()) return escapeHtml(text);
     var withReadings = (window.ZHUYIN_IVS && window.ZHUYIN_IVS[text]) || text;
     return '<span class="' + (activeDifficulty === 'easy' ? 'zy-easy' : 'zy-medium') + '">' + escapeHtml(withReadings) + '</span>';
+  }
+
+  // 固定在 index.html 裡的文字：標了 data-zy="簡化版文字" 的元素，簡單／中等難度會換成注音版，困難難度維持原文。
+  // 再加上 data-zy-speak 的元素，簡單／中等難度會多一個小喇叭圖示，點一下就念出來。
+  function applyChromeZhuyin() {
+    var simple = isSimplified();
+    document.querySelectorAll('[data-zy]').forEach(function (el) {
+      if (el.dataset.orig === undefined) el.dataset.orig = el.innerHTML;
+      var speakable = el.hasAttribute('data-zy-speak');
+      if (!simple) {
+        el.innerHTML = el.dataset.orig;
+        if (speakable) { el.classList.remove('simplified-speak-btn', 'cursor-pointer'); delete el.dataset.speak; }
+        return;
+      }
+      el.innerHTML = phoneticText(el.dataset.zy) +
+        (speakable ? ' <span class="material-symbols-outlined text-[24px] align-middle text-primary">volume_up</span>' : '');
+      if (speakable) { el.classList.add('simplified-speak-btn', 'cursor-pointer'); el.dataset.speak = el.dataset.zy; }
+    });
   }
 
   function loadProfiles() {
@@ -184,6 +210,7 @@
   // ---------- 導覽 ----------
   var currentView = null;
   function switchView(viewKey) {
+    if (!state) return; // 還沒登入（例如直接打開 #diary 網址）時，各頁面都沒有資料可畫，等登入後 enterApp 會再切換
     if (viewKey === currentView) return;
     currentView = viewKey;
     document.querySelectorAll('.view').forEach(function (v) { v.hidden = (v.dataset.view !== viewKey); });
@@ -250,6 +277,27 @@
   // ============ 我的心靈花園 ============
   function renderMoodPebbles() {
     var wrap = document.getElementById('garden-mood-group');
+    if (isSimplified()) {
+      wrap.className = 'grid grid-cols-3 gap-space-xs';
+      wrap.innerHTML = MOOD_ORDER.map(function (key) {
+        var d = DIARY_SIMPLE[key];
+        var active = state.currentMood === key;
+        return '<button type="button" data-mood="' + key + '" aria-label="' + d.word + '" class="garden-mood-btn flex flex-col items-center justify-center gap-space-xxs p-space-sm rounded-2xl border-2 min-h-[110px] active:scale-95 ' +
+          (active ? 'bg-primary-fixed/60 border-primary ring-2 ring-primary shadow-md' : 'bg-surface-container-low border-outline-variant') + '">' +
+          '<span class="text-[44px] leading-none">' + d.emoji + '</span>' +
+          '<span class="text-[20px] text-on-surface font-bold leading-tight">' + phoneticText(d.word) + '</span></button>';
+      }).join('');
+      wrap.querySelectorAll('.garden-mood-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          state.currentMood = btn.dataset.mood;
+          saveState();
+          speak('我覺得' + DIARY_SIMPLE[state.currentMood].word);
+          renderMoodPebbles();
+        });
+      });
+      return;
+    }
+    wrap.className = 'flex flex-col gap-space-xs';
     wrap.innerHTML = MOOD_ORDER.map(function (key) {
       var m = MOODS[key];
       var active = state.currentMood === key;
@@ -273,12 +321,18 @@
 
   function renderGarden() {
     refreshDewBadges();
-    document.getElementById('garden-progress-text').textContent = state.growthStage + ' / 6 滴';
     var info = STAGE_INFO[state.growthStage];
     document.getElementById('garden-stage-icon').textContent = info.icon;
     document.getElementById('plant-visual-icon').textContent = info.icon;
-    document.getElementById('garden-stage-label').textContent = '第 ' + state.growthStage + ' 階 · ' + info.label;
-    document.getElementById('garden-status-desc').textContent = info.desc;
+    if (isSimplified()) {
+      document.getElementById('garden-progress-text').innerHTML = state.growthStage + ' / 6 ' + phoneticText('滴');
+      document.getElementById('garden-stage-label').innerHTML = phoneticText(info.label);
+      document.getElementById('garden-status-desc').innerHTML = phoneticText(info.simple);
+    } else {
+      document.getElementById('garden-progress-text').textContent = state.growthStage + ' / 6 滴';
+      document.getElementById('garden-stage-label').textContent = '第 ' + state.growthStage + ' 階 · ' + info.label;
+      document.getElementById('garden-status-desc').textContent = info.desc;
+    }
     renderMoodPebbles();
     if (!meadowInitialized) { meadowInitialized = true; initMeadow(); }
   }
@@ -295,16 +349,31 @@
     state.unlockedFairies.forEach(function (key) {
       var m = MOODS[key];
       // 有跳躍圖的話，走動時會跟站姿圖交替顯示，製造出蹦跳的動感
-      list.push({ img: m.fairyMeadowImg || m.fairyImg, standImg: m.fairyImg, name: m.fairyName, desc: m.fairyDesc, canFly: true, pitch: hashPitch(m.fairyName) });
+      list.push({ img: m.fairyMeadowImg || m.fairyImg, standImg: m.fairyImg, name: m.fairyName, emotion: null, desc: m.fairyDesc, canFly: true, pitch: hashPitch(m.fairyName) });
     });
     FRUITS.forEach(function (f) {
       // 水果精靈目前只有一張圖，沒有第二個姿勢可以交替
-      list.push({ img: f.img, standImg: null, name: f.name, desc: f.desc, canFly: false, pitch: hashPitch(f.id) });
+      list.push({ img: f.img, standImg: null, name: f.name, emotion: f.emotion, desc: f.desc, canFly: false, pitch: hashPitch(f.id) });
     });
     return list;
   }
 
   function showResidentModal(resident) {
+    if (isSimplified()) {
+      var hi = RESIDENT_GREETINGS[Math.floor(Math.random() * RESIDENT_GREETINGS.length)];
+      var nameHtml = resident.emotion ? phoneticText(resident.emotion) + phoneticText('精靈') : phoneticText(resident.name);
+      showModal(
+        '<div class="text-center space-y-space-md">' +
+        '<div class="relative inline-block"><img id="meadow-modal-img" src="' + resident.img + '" alt="' + escapeHtml(resident.name) + '" class="char-pop-in inline-block w-40 h-40 object-contain drop-shadow-lg" /></div>' +
+        '<h2 class="text-[26px] font-bold text-primary">' + nameHtml + '</h2>' +
+        '<p class="text-[22px] text-on-surface-variant">' + phoneticText(hi) + '</p>' +
+        '<button class="w-full h-14 rounded-full bg-primary text-on-primary text-[20px]" onclick="closeModal()">👋 ' + phoneticText('掰掰') + '</button>' +
+        '</div>'
+      );
+      makeCharacterInteractive(document.getElementById('meadow-modal-img'), resident.pitch);
+      speak(hi); // 點花園居民的當下念出來
+      return;
+    }
     showModal(
       '<div class="text-center space-y-space-md">' +
       '<div class="relative inline-block"><img id="meadow-modal-img" src="' + resident.img + '" alt="' + resident.name + '" class="char-pop-in inline-block w-40 h-40 object-contain drop-shadow-lg" /></div>' +
@@ -447,6 +516,18 @@
 
   document.getElementById('water-plant-btn').addEventListener('click', function () {
     if (state.waterInventory <= 0) {
+      if (isSimplified()) {
+        speak('甘露用完了。去寫心情日記，就有甘露！');
+        showModal(
+          '<div class="text-center space-y-space-md">' +
+          '<span class="material-symbols-outlined text-tertiary" style="font-size:56px;">water_drop</span>' +
+          '<h2 class="text-[26px] font-bold text-primary">' + phoneticText('甘露用完了') + '</h2>' +
+          '<p class="text-[22px] text-on-surface-variant">' + phoneticText('去寫心情日記，就有甘露！') + '</p>' +
+          '<button class="w-full h-14 rounded-full bg-primary text-on-primary text-[20px]" onclick="closeModal(); location.hash=\'diary\'; window.__switchView(\'diary\');">' + phoneticText('去寫日記') + '</button>' +
+          '</div>'
+        );
+        return;
+      }
       showModal(
         '<div class="text-center space-y-space-md">' +
         '<span class="material-symbols-outlined text-tertiary" style="font-size:56px;">water_drop</span>' +
@@ -464,10 +545,24 @@
     playWater();
 
     if (state.growthStage >= 6) {
+      // 計時器裡的 speak 在 iOS 可能不會響，所以在點擊當下先念
+      if (isSimplified()) speak(MOODS[dominantMood()].fairyName + '出生了！');
       setTimeout(function () { triggerHatch(); }, 500);
     } else {
       saveState();
       renderGarden();
+      if (isSimplified()) {
+        speak('澆水成功！小樹長大了！');
+        showModal(
+          '<div class="text-center space-y-space-sm">' +
+          '<span class="material-symbols-outlined text-primary" style="font-size:48px;">local_florist</span>' +
+          '<h2 class="text-[26px] font-bold text-primary">' + phoneticText('澆水成功！') + '</h2>' +
+          '<p class="text-[22px] text-on-surface-variant">' + phoneticText('小樹長大了！') + '</p>' +
+          '<button class="w-full h-14 rounded-full bg-primary text-on-primary text-[20px]" onclick="closeModal()">' + phoneticText('好') + '</button>' +
+          '</div>'
+        );
+        return;
+      }
       showModal(
         '<div class="text-center space-y-space-sm">' +
         '<span class="material-symbols-outlined text-primary" style="font-size:48px;">local_florist</span>' +
@@ -491,8 +586,19 @@
     renderGarden();
     playSuccess();
     var calmHatch = !!state.reducedMotion;
+    var simpleHatch = isSimplified();
     var imgClass = calmHatch ? 'inline-block w-40 h-40 object-contain drop-shadow-lg' : (m.hatchFrames ? 'inline-block w-40 h-40 object-contain drop-shadow-lg' : 'char-pop-in inline-block w-40 h-40 object-contain drop-shadow-lg');
-    showModal(
+    showModal(simpleHatch ?
+      '<div class="text-center space-y-space-md">' +
+      '<div class="relative inline-block"><img id="hatch-fairy-img" src="' + m.fairyImg + '" alt="' + escapeHtml(m.fairyName) + '" class="' + imgClass + '" /></div>' +
+      '<h2 class="text-[26px] font-bold text-primary">✨ ' + phoneticText(m.fairyName) + ' ✨</h2>' +
+      '<div class="bg-surface-container-low rounded-lg p-space-md space-y-space-xs">' +
+      '<p class="text-[20px] text-primary font-bold">' + phoneticText('本領：') + phoneticText(m.simpleSkill) + '</p>' +
+      '<p class="text-[20px] text-on-surface-variant">' + phoneticText(m.simpleSkillDesc) + '</p>' +
+      '</div>' +
+      '<p class="text-[22px] text-on-surface-variant" id="hatch-fairy-desc">' + phoneticText('很高興認識你！') + '</p>' +
+      '<button class="w-full h-14 rounded-full bg-primary text-on-primary text-[20px]" onclick="closeModal()">🤝 ' + phoneticText('好的') + '</button>' +
+      '</div>' :
       '<div class="text-center space-y-space-md">' +
       '<div class="relative inline-block"><img id="hatch-fairy-img" src="' + m.fairyImg + '" alt="' + m.fairyName + '" class="' + imgClass + '" /></div>' +
       '<h2 class="font-headline-md text-headline-md text-primary">✨ 專屬綻放！' + m.fairyName + ' ✨</h2>' +
@@ -535,7 +641,7 @@
     } else {
       makeCharacterInteractive(hatchImg, hatchPitch);
     }
-    typewriterVoice(document.getElementById('hatch-fairy-desc'), '很高興認識你，以後就是好夥伴了！', hatchPitch);
+    if (!simpleHatch) typewriterVoice(document.getElementById('hatch-fairy-desc'), '很高興認識你，以後就是好夥伴了！', hatchPitch);
   }
 
   // ============ 情緒澆灌日記 ============
@@ -562,7 +668,7 @@
       'diary-headline': phoneticText('今天的心情怎麼樣？'),
       'diary-step1-title': phoneticText('選一個心情'),
       'diary-step1-note': '',
-      'diary-step2-title': phoneticText('說說今天發生的事'),
+      'diary-step2-title': SpeechRec ? phoneticText('說說今天發生的事') : phoneticText('寫下今天發生的事'),
       'diary-submit-title': phoneticText('完成今天的心情'),
       'diary-submit-desc': '',
       'diary-history-title': phoneticText('我的心情紀錄')
@@ -599,7 +705,8 @@
     document.getElementById('diary-mic-btn').classList.remove('listening');
     document.getElementById('diary-mic-icon').textContent = 'mic';
     document.getElementById('diary-journal-input').placeholder = isSimplified()
-      ? '按麥克風說說看，也可以自己打字' : '今天發生了什麼事？不用寫很多，真實就好...';
+      ? (SpeechRec ? '按麥克風說說看，也可以自己打字' : '今天發生了什麼事？寫一點點就好')
+      : '今天發生了什麼事？不用寫很多，真實就好...';
     setDiaryMicStatus(diaryMicIdleText());
     updateDiaryReplay();
   }
@@ -813,8 +920,14 @@
 
   // ============ 成長六階圖鑑 ============
   function renderGrowth() {
-    document.getElementById('growth-unlocked-count').textContent = state.unlockedFairies.length + ' / 5 隻';
-    document.getElementById('growth-harvest-count').textContent = state.harvestCount + ' 次';
+    var simple = isSimplified();
+    if (simple) {
+      document.getElementById('growth-unlocked-count').innerHTML = state.unlockedFairies.length + ' / 5 ' + phoneticText('隻');
+      document.getElementById('growth-harvest-count').innerHTML = state.harvestCount + ' ' + phoneticText('次');
+    } else {
+      document.getElementById('growth-unlocked-count').textContent = state.unlockedFairies.length + ' / 5 隻';
+      document.getElementById('growth-harvest-count').textContent = state.harvestCount + ' 次';
+    }
 
     var dom = dominantMood();
     var grid = document.getElementById('fairy-gallery-grid');
@@ -823,6 +936,32 @@
       var unlocked = state.unlockedFairies.indexOf(key) !== -1;
       var isInProgress = !unlocked && dom === key && state.moodHistory.length > 0;
       var progressPct = isInProgress ? Math.round((state.growthStage / 6) * 100) : 0;
+      if (simple) {
+        var d = DIARY_SIMPLE[key];
+        var imgStyle = unlocked ? '' : 'filter:grayscale(1);opacity:.55;';
+        return '<div class="flex flex-col justify-between rounded-lg bg-surface-container-lowest p-space-lg shadow-sm">' +
+          '<div>' +
+          '<div class="flex items-center justify-between mb-space-md">' +
+          '<span class="inline-flex items-center gap-space-xxs px-space-sm py-space-xxs rounded-full ' + m.swatch + ' font-bold text-[18px]">' + d.emoji + ' ' + phoneticText(d.word) + '</span>' +
+          (unlocked
+            ? '<span class="flex items-center gap-1 text-primary text-[18px]"><span class="material-symbols-outlined text-[22px]">verified</span>' + phoneticText('是好朋友') + '</span>'
+            : '<span class="text-secondary font-bold text-[18px]">' + phoneticText('正在長大') + ' ' + progressPct + '%</span>') +
+          '</div>' +
+          '<div class="relative w-full h-40 rounded-xl overflow-hidden mb-space-md bg-surface-container flex items-center justify-center shadow-inner">' +
+          '<img src="' + m.fairyImg + '" alt="' + escapeHtml(m.fairyName) + '" class="w-28 h-28 object-contain" style="' + imgStyle + '" /></div>' +
+          '<h3 class="text-[26px] font-bold text-on-surface mb-space-xs">' + phoneticText(m.fairyName) + '</h3>' +
+          '<p class="text-[20px] text-on-surface-variant mb-space-sm">' + phoneticText(m.simpleDesc) + '</p>' +
+          '<button type="button" class="simplified-speak-btn flex items-center gap-1.5 px-space-md py-space-xs rounded-full bg-primary-fixed text-primary mb-space-md" data-speak="' + escapeHtml(m.fairyName + '。' + m.simpleDesc + '本領是' + m.simpleSkill + '。' + m.simpleSkillDesc) + '">' +
+          '<span class="material-symbols-outlined text-[22px]">volume_up</span><span class="text-[18px]">' + phoneticText('聽一聽') + '</span></button>' +
+          '<div class="rounded-DEFAULT bg-surface-container p-space-md mb-space-md space-y-space-xxs">' +
+          '<p class="text-[20px] text-primary font-bold">' + phoneticText('本領：') + phoneticText(m.simpleSkill) + '</p>' +
+          '<p class="text-[18px] text-on-surface-variant">' + phoneticText(m.simpleSkillDesc) + '</p>' +
+          '</div></div>' +
+          (unlocked
+            ? '<div class="p-space-sm rounded-DEFAULT bg-surface-container-high text-center text-[20px] text-primary">' + phoneticText('是你的好朋友！') + '</div>'
+            : '<a href="#diary" data-view="jump" data-target="diary" class="w-full h-12 rounded-full bg-primary-fixed text-on-primary-fixed text-[20px] flex items-center justify-center">' + phoneticText('去寫心情日記') + '</a>') +
+          '</div>';
+      }
       return '<div class="flex flex-col justify-between rounded-lg bg-surface-container-lowest p-space-lg shadow-sm">' +
         '<div>' +
         '<div class="flex items-center justify-between mb-space-md">' +
@@ -858,6 +997,16 @@
     timeline.innerHTML = STAGE_INFO.map(function (info, idx) {
       var achieved = idx <= state.growthStage;
       var isCurrent = idx === state.growthStage;
+      if (simple) {
+        return '<div class="flex flex-col items-center text-center p-space-md rounded-lg bg-surface-container-lowest shadow-sm ' + (isCurrent ? 'ring-2 ring-primary shadow-md' : '') + '">' +
+          '<div class="w-10 h-10 rounded-full flex items-center justify-center text-[16px] font-bold mb-space-xs ' + (isCurrent ? 'bg-primary text-on-primary' : 'bg-surface-container text-on-surface-variant') + '">💧 ' + idx + '</div>' +
+          '<div class="w-16 h-16 rounded-full flex items-center justify-center mb-space-xs ' + (achieved ? 'bg-primary-fixed text-primary' : 'bg-surface-container-low text-on-surface-variant') + '"><span class="material-symbols-outlined text-[32px]">' + info.icon + '</span></div>' +
+          '<span class="text-[20px] ' + (isCurrent ? 'text-primary font-bold' : 'text-on-surface') + ' mb-space-xxs">' + phoneticText(info.label) + '</span>' +
+          '<span class="text-[16px] text-on-surface-variant">' + phoneticText(info.simple) + '</span>' +
+          '<div class="mt-space-sm inline-flex items-center gap-1 text-[16px] ' + (achieved ? 'text-primary' : 'text-on-surface-variant') + '">' +
+          '<span class="material-symbols-outlined text-[18px]">' + (achieved ? 'check_circle' : 'lock') + '</span>' + (achieved ? phoneticText('到了') : phoneticText('還沒到')) +
+          '</div></div>';
+      }
       return '<div class="flex flex-col items-center text-center p-space-md rounded-lg bg-surface-container-lowest shadow-sm ' + (isCurrent ? 'ring-2 ring-primary shadow-md' : '') + '">' +
         '<div class="w-10 h-10 rounded-full flex items-center justify-center font-label-sm text-label-sm font-bold mb-space-xs ' + (isCurrent ? 'bg-primary text-on-primary' : 'bg-surface-container text-on-surface-variant') + '">💧 ' + idx + '</div>' +
         '<div class="w-16 h-16 rounded-full flex items-center justify-center mb-space-xs ' + (achieved ? 'bg-primary-fixed text-primary' : 'bg-surface-container-low text-on-surface-variant') + '"><span class="material-symbols-outlined text-[32px]">' + info.icon + '</span></div>' +
@@ -879,12 +1028,21 @@
     return audioCtx;
   }
 
+  // 呼吸引導語：簡單／中等難度用注音，而且每次換階段會念出來（一開始的那一句在點「開始」的當下念，之後計時器接著念）
+  function breathMsg(kind) {
+    if (kind === 'ready') return isSimplified() ? phoneticText('準備好了嗎？') : '準備好了嗎？';
+    if (kind === 'in') return isSimplified() ? phoneticText('慢慢吸氣…') : '慢慢吸氣……';
+    return isSimplified() ? phoneticText('慢慢吐氣…') : '慢慢吐氣……';
+  }
+  function breathSpeak(kind) { if (isSimplified()) speak(kind === 'in' ? '慢慢吸氣' : '慢慢吐氣'); }
+
   function startBreathing() {
     var ring = document.getElementById('breath-ring');
     var text = document.getElementById('breath-text');
     var phase = 'inhale';
     ring.classList.add('inhale');
-    text.textContent = '慢慢吸氣……';
+    text.innerHTML = breathMsg('in');
+    breathSpeak('in');
     if (soundEnabled) {
       var ctx = ensureAudio();
       breathOsc = ctx.createOscillator();
@@ -900,11 +1058,13 @@
     breathInterval = setInterval(function () {
       if (phase === 'inhale') {
         ring.classList.remove('inhale'); ring.classList.add('exhale');
-        text.textContent = '慢慢吐氣……';
+        text.innerHTML = breathMsg('out');
+        breathSpeak('out');
         phase = 'exhale';
       } else {
         ring.classList.remove('exhale'); ring.classList.add('inhale');
-        text.textContent = '慢慢吸氣……';
+        text.innerHTML = breathMsg('in');
+        breathSpeak('in');
         phase = 'inhale';
       }
     }, 4000);
@@ -913,6 +1073,7 @@
   }
 
   function stopBreathing() {
+    if (breathInterval && 'speechSynthesis' in window) window.speechSynthesis.cancel(); // 結束練習就別再念了
     if (breathInterval) { clearInterval(breathInterval); breathInterval = null; }
     if (breathOsc) {
       try {
@@ -925,7 +1086,7 @@
     var ring = document.getElementById('breath-ring');
     if (ring) { ring.classList.remove('inhale', 'exhale'); }
     var text = document.getElementById('breath-text');
-    if (text) text.textContent = '準備好了嗎？';
+    if (text) text.innerHTML = breathMsg('ready');
     var startBtn = document.getElementById('breath-start-btn');
     var stopBtn = document.getElementById('breath-stop-btn');
     if (startBtn) startBtn.classList.remove('hidden');
@@ -1078,7 +1239,8 @@
         if (!calm) spawnSparkles(wrapper);
         var bubble = document.createElement('div');
         bubble.className = 'char-speech-bubble';
-        bubble.textContent = REACTION_LINES[Math.floor(Math.random() * REACTION_LINES.length)];
+        var line = REACTION_LINES[Math.floor(Math.random() * REACTION_LINES.length)];
+        if (isSimplified()) bubble.innerHTML = phoneticText(line); else bubble.textContent = line;
         wrapper.appendChild(bubble);
         setTimeout(function () { bubble.remove(); }, 1400);
       }
@@ -1146,18 +1308,20 @@
   var quickBreathInterval = null;
   var quickBreathOsc = null, quickBreathGain = null;
   function openQuickBreathing() {
+    var qSimple = isSimplified();
     showModal(
       '<div class="text-center space-y-space-lg">' +
-      '<h2 class="font-headline-sm text-headline-sm text-primary flex items-center justify-center gap-space-xs"><span class="material-symbols-outlined">self_improvement</span> 深呼吸一下</h2>' +
-      '<div class="breath-ring mx-auto" id="quick-breath-ring"><span class="font-headline-md text-headline-md text-primary" id="quick-breath-text">準備好了嗎？</span></div>' +
-      '<button class="w-full h-14 rounded-full bg-primary text-on-primary font-label-md text-label-md" onclick="closeModal()">👍 好多了，關閉</button>' +
+      '<h2 class="font-headline-sm text-headline-sm text-primary flex items-center justify-center gap-space-xs"><span class="material-symbols-outlined">self_improvement</span> ' + (qSimple ? phoneticText('深呼吸一下') : '深呼吸一下') + '</h2>' +
+      '<div class="breath-ring mx-auto" id="quick-breath-ring"><span class="font-headline-md text-headline-md text-primary" id="quick-breath-text">' + breathMsg('ready') + '</span></div>' +
+      '<button class="w-full h-14 rounded-full bg-primary text-on-primary font-label-md text-label-md" onclick="closeModal()">👍 ' + (qSimple ? phoneticText('好多了') : '好多了，關閉') + '</button>' +
       '</div>'
     );
     var ring = document.getElementById('quick-breath-ring');
     var text = document.getElementById('quick-breath-text');
     var phase = 'inhale';
     ring.classList.add('inhale');
-    text.textContent = '慢慢吸氣……';
+    text.innerHTML = breathMsg('in');
+    breathSpeak('in');
     if (soundEnabled) {
       var ctx = ensureAudio();
       quickBreathOsc = ctx.createOscillator();
@@ -1173,16 +1337,19 @@
     quickBreathInterval = setInterval(function () {
       if (phase === 'inhale') {
         ring.classList.remove('inhale'); ring.classList.add('exhale');
-        text.textContent = '慢慢吐氣……';
+        text.innerHTML = breathMsg('out');
+        breathSpeak('out');
         phase = 'exhale';
       } else {
         ring.classList.remove('exhale'); ring.classList.add('inhale');
-        text.textContent = '慢慢吸氣……';
+        text.innerHTML = breathMsg('in');
+        breathSpeak('in');
         phase = 'inhale';
       }
     }, 4000);
   }
   window.__stopQuickBreathing = function () {
+    if (quickBreathInterval && 'speechSynthesis' in window) window.speechSynthesis.cancel();
     if (quickBreathInterval) { clearInterval(quickBreathInterval); quickBreathInterval = null; }
     if (quickBreathOsc) {
       try {
@@ -2089,6 +2256,7 @@
     document.getElementById('app-shell').hidden = false;
     var p = loadProfiles().filter(function (x) { return x.id === id; })[0];
     activeDifficulty = (p && p.difficulty) || 'hard'; // 舊資料沒有 difficulty 欄位時，維持原本完整版行為
+    applyChromeZhuyin();
     if (p) {
       document.getElementById('profile-switch-name').textContent = p.name;
       document.getElementById('profile-switch-avatar').textContent = p.avatar;
