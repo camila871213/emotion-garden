@@ -1582,10 +1582,9 @@
   }
 
   // ============ 叢林冒險（滿版沉浸式，文字僅作輔助，降低認知負荷） ============
-  // 三大單元：處己(自我覺察) → 處人(人際互動) → 處環境(環境適應)，各自對應不同的互動設計
+  // 三大單元（處己／處人／處環境）只在程式與老師端統計裡當作內部分類，學生畫面不再出現單元名稱與入口；單元決定題目的提問方式與背景色
   var jungleInitialized = false;
-  var jungleScreen = 'menu'; // 'menu'(選單元) | 'levels'(選關卡) | 'play'(漫畫/答題)
-  var jungleActiveUnit = null; // 'self' | 'social' | 'env'，在 'levels'/'play' 時有值
+  var jungleScreen = 'menu'; // 'menu'(選關卡) | 'play'(看故事／答題)
   var jungleActiveIdx = null; // 目前正在玩的關卡在 SCENARIOS 裡的索引，在 'play' 時有值
   var jungleAnswered = false;
 
@@ -1765,47 +1764,41 @@
     return state.jungleProgress[idx];
   }
 
-  // 同單元內要按難度順序解鎖：前一關通過才能玩下一關，第一關永遠開放
+  // 15 關排成一條路，依序解鎖：前一關通過才能玩下一關，第一關永遠開放（SCENARIOS 的順序就是關卡順序）
   function isScenarioUnlocked(idx) {
-    var indices = unitIndices(SCENARIOS[idx].unit);
-    var pos = indices.indexOf(idx);
-    return pos === 0 || jungleProg(indices[pos - 1]).completed;
+    return idx === 0 || jungleProg(idx - 1).completed;
   }
 
-  // 左上角固定顯示「第幾關＋處己/處人/處環境分類」（該單元內的第幾關，不是全部 15 關的總編號）
-  function levelText(pos) {
-    if (!isSimplified()) return '第 ' + pos + ' 關';
+  // 每一關的 AI 故事影片（第一人稱社會性故事）。檔案放進 assets/jungle-videos/，再在這裡填上「關卡編號: 檔名」即可，例如：
+  //   1: 'assets/jungle-videos/level-01.mp4',
+  // 沒填（或影片載入失敗）的關卡，會自動改用圖示＋文字的四格故事當作退回方案。
+  var JUNGLE_VIDEOS = {};
+
+  // 左上角固定顯示「第幾關」（15 關的總編號，不再顯示處己／處人／處環境這些分類名稱）
+  function levelText(num) {
+    if (!isSimplified()) return '第 ' + num + ' 關';
     var numerals = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
-    return phoneticText('第' + (numerals[pos - 1] || pos) + '關');
+    var zh = num <= 10 ? numerals[num - 1] : '十' + numerals[num - 11]; // 11～19：十一、十二⋯
+    return phoneticText('第' + zh + '關');
   }
 
   function renderJungleLevelBadge(idx) {
     var badge = document.getElementById('jungle-level-badge');
     if (typeof idx !== 'number') { badge.innerHTML = ''; return; }
-    var sc = SCENARIOS[idx];
-    var u = UNITS[sc.unit];
-    var pos = unitIndices(sc.unit).indexOf(idx) + 1;
     if (isSimplified()) {
-      // 簡單／中等：不寫「處己」這種單元名稱（孩子看不懂），只留單元圖示 + 「第一關」，並依難度標上注音
-      badge.innerHTML = '<div class="inline-flex items-center gap-2 px-space-md py-1 rounded-full bg-white/25 backdrop-blur-sm text-white text-[22px] leading-tight">' +
-        '<span>' + u.icon + '</span>' + levelText(pos) + '</div>';
+      badge.innerHTML = '<div class="inline-flex items-center gap-2 px-space-md py-1 rounded-full bg-white/25 backdrop-blur-sm text-white text-[22px] leading-tight">' + levelText(idx + 1) + '</div>';
       return;
     }
-    badge.innerHTML = '<div class="inline-flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-white/25 backdrop-blur-sm text-white font-label-sm text-label-sm">' +
-      '<span>' + u.icon + ' ' + u.name + '</span>' +
-      '<span class="opacity-70">·</span>' +
-      '<span>第 ' + pos + ' 關</span></div>';
+    badge.innerHTML = '<div class="inline-flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-white/25 backdrop-blur-sm text-white font-label-sm text-label-sm">' + levelText(idx + 1) + '</div>';
   }
 
-  // 進度小圓點：只在實際玩關卡時顯示，範圍是「目前這個單元」而不是全部 15 關
+  // 進度小圓點：只在實際玩關卡時顯示，15 關一條路，已完成的亮起來
   function renderJungleDots() {
     var dots = document.getElementById('jungle-progress-dots');
-    if (jungleScreen !== 'play' || jungleActiveIdx === null) { dots.innerHTML = ''; return; }
-    var indices = unitIndices(SCENARIOS[jungleActiveIdx].unit);
-    var pos = indices.indexOf(jungleActiveIdx);
-    dots.innerHTML = indices.map(function (gi, i) {
-      var st = jungleProg(gi).completed ? 'done' : (i === pos ? 'current' : 'todo');
-      var cls = st === 'done' ? 'bg-white w-2.5 h-2.5' : st === 'current' ? 'bg-white w-6 h-2.5' : 'bg-white/40 w-2.5 h-2.5';
+    if (jungleScreen === 'menu' || jungleActiveIdx === null) { dots.innerHTML = ''; return; }
+    dots.innerHTML = SCENARIOS.map(function (_, gi) {
+      var st = jungleProg(gi).completed ? 'done' : (gi === jungleActiveIdx ? 'current' : 'todo');
+      var cls = st === 'done' ? 'bg-white w-2 h-2' : st === 'current' ? 'bg-white w-5 h-2' : 'bg-white/40 w-2 h-2';
       return '<span class="rounded-full transition-all ' + cls + '"></span>';
     }).join('');
   }
@@ -1815,68 +1808,30 @@
     tint.className = 'absolute inset-0 ' + (cls || '');
   }
 
-  // 單元選單：三個入口（處己／處人／處環境），各自顯示已完成關數
+  // 關卡列表：沒有單元入口，直接是 15 關一條路。鎖住尚未解鎖的關卡，已完成的可以重玩
   function renderJungleMenu() {
     jungleScreen = 'menu';
-    jungleActiveUnit = null;
     jungleActiveIdx = null;
     setJungleTint('bg-black/20');
     renderJungleLevelBadge();
     renderJungleDots();
-    var totalDone = UNIT_KEYS.reduce(function (sum, k) {
-      return sum + unitIndices(k).filter(function (gi) { return jungleProg(gi).completed; }).length;
-    }, 0);
+    var totalDone = SCENARIOS.filter(function (_, gi) { return jungleProg(gi).completed; }).length;
     var allDone = totalDone === SCENARIOS.length;
     document.getElementById('jungle-content').innerHTML =
       '<h1 class="font-headline-lg text-headline-lg text-white drop-shadow-lg">' + phoneticText('叢林冒險') + '</h1>' +
-      '<p class="font-body-md text-body-md text-white/90 drop-shadow">' + phoneticText('選一個單元開始練習！') + '</p>' +
+      '<p class="font-body-md text-body-md text-white/90 drop-shadow">' + phoneticText('選一關開始！') + '</p>' +
       (allDone ? '<div class="inline-flex items-center gap-1.5 px-space-md py-1.5 rounded-full bg-white/90 text-primary font-label-md text-label-md shadow-md">🏆 ' + phoneticText('全部關卡都完成囉！') + '</div>' : '') +
-      '<div class="flex flex-col sm:flex-row gap-space-md w-full max-w-2xl mt-space-sm">' +
-      UNIT_KEYS.map(function (key) {
-        var u = UNITS[key];
-        var indices = unitIndices(key);
-        var done = indices.filter(function (gi) { return jungleProg(gi).completed; }).length;
-        return '<button type="button" data-unit="' + key + '" class="jungle-unit-card flex-1 flex flex-col items-center gap-space-xs px-space-lg py-space-xl rounded-2xl bg-white/95 hover:bg-white shadow-xl transition-all active:scale-95">' +
-          '<span class="text-[48px] leading-none">' + u.icon + '</span>' +
-          '<span class="font-headline-sm text-headline-sm text-on-surface">' + phoneticText(u.name) + '</span>' +
-          '<span class="font-body-sm text-body-sm text-on-surface-variant text-center">' + phoneticText(u.sub) + '</span>' +
-          '<span class="font-label-md text-label-md text-primary font-bold">' + done + ' / ' + indices.length + ' 已完成</span>' +
-          '</button>';
-      }).join('') + '</div>';
-    document.querySelectorAll('.jungle-unit-card').forEach(function (btn) {
-      btn.addEventListener('click', function () { renderJungleLevels(btn.dataset.unit); });
-    });
-  }
-
-  // 關卡列表：同一單元內依序排列，鎖住尚未解鎖的關卡，已完成的可以重玩練習
-  function renderJungleLevels(unitKey) {
-    jungleScreen = 'levels';
-    jungleActiveUnit = unitKey;
-    jungleActiveIdx = null;
-    var u = UNITS[unitKey];
-    setJungleTint(u.tint);
-    renderJungleLevelBadge();
-    renderJungleDots();
-    var indices = unitIndices(unitKey);
-    document.getElementById('jungle-content').innerHTML =
-      '<div class="w-full max-w-2xl">' +
-      '<button type="button" id="jungle-back-to-menu" class="inline-flex items-center gap-1 mb-space-sm px-space-md py-1.5 rounded-full bg-white/25 backdrop-blur-sm text-white font-label-sm text-label-sm">' +
-      '<span class="material-symbols-outlined text-[18px]">arrow_back</span>' + phoneticText('換單元') + '</button>' +
-      '<div class="text-[48px] leading-none drop-shadow-lg">' + u.icon + '</div>' +
-      '<h1 class="font-headline-lg text-headline-lg text-white drop-shadow-lg">' + phoneticText(u.name) + '</h1>' +
-      '<p class="font-body-md text-body-md text-white/90 drop-shadow mb-space-md">' + phoneticText(u.sub) + '</p>' +
-      '<div class="grid grid-cols-2 sm:grid-cols-3 gap-space-sm">' +
-      indices.map(function (gi, i) {
+      '<div class="grid grid-cols-3 sm:grid-cols-5 gap-space-sm w-full max-w-3xl mt-space-sm">' +
+      SCENARIOS.map(function (_, gi) {
         var prog = jungleProg(gi);
         var unlocked = isScenarioUnlocked(gi);
         var stateCls = prog.completed ? 'bg-white text-on-surface' : unlocked ? 'bg-white/90 text-on-surface hover:bg-white active:scale-95' : 'bg-white/30 text-white/70 cursor-not-allowed';
-        return '<button type="button" data-idx="' + gi + '" ' + (unlocked ? '' : 'disabled') + ' class="jungle-level-btn flex flex-col items-center gap-1 px-space-md py-space-lg rounded-xl shadow-lg transition-all ' + stateCls + '">' +
+        return '<button type="button" data-idx="' + gi + '" ' + (unlocked ? '' : 'disabled') + ' class="jungle-level-btn flex flex-col items-center gap-1 px-space-sm py-space-lg rounded-xl shadow-lg transition-all ' + stateCls + '">' +
           '<span class="text-[24px] leading-none">' + (prog.completed ? '✅' : unlocked ? '▶️' : '🔒') + '</span>' +
-          '<span class="font-label-md text-label-md font-bold">' + levelText(i + 1) + '</span>' +
+          '<span class="font-label-md text-label-md font-bold">' + levelText(gi + 1) + '</span>' +
           (prog.completed ? '<span class="text-[12px]">' + phoneticText('重玩練習') + '</span>' : '') +
           '</button>';
-      }).join('') + '</div></div>';
-    document.getElementById('jungle-back-to-menu').addEventListener('click', renderJungleMenu);
+      }).join('') + '</div>';
     document.querySelectorAll('.jungle-level-btn:not(:disabled)').forEach(function (btn) {
       btn.addEventListener('click', function () { startJungleLevel(parseInt(btn.dataset.idx, 10)); });
     });
@@ -1885,7 +1840,6 @@
   function startJungleLevel(idx) {
     delete SCENARIOS[idx]._order; // 每次進關卡都重新洗牌選項順序，重玩練習時也不會背答案位置
     jungleScreen = 'play';
-    jungleActiveUnit = SCENARIOS[idx].unit;
     jungleActiveIdx = idx;
     jungleAnswered = false;
     enterScenario(idx);
@@ -1915,11 +1869,8 @@
     renderJungleDots();
     // panel.tagLabel 可以覆蓋預設標籤文字（例如處己單元把「觀點」顯示成「身體訊號」），顏色still跟著 tag 分類走
     var tag = panel.tag ? { label: panel.tagLabel || STORY_TAGS[panel.tag].label, bg: STORY_TAGS[panel.tag].bg, color: STORY_TAGS[panel.tag].color } : null;
-    // panel.video：簡單/中等難度用的第一人稱社會性故事影片（老師之後用 AI 產生），還沒提供影片前自動退回圖示+語音的呈現方式
-    var showVideo = isSimplified() && panel.video;
-    var visualHtml = showVideo
-      ? '<video src="' + panel.video + '" controls playsinline autoplay class="w-full max-w-md rounded-xl shadow-md"></video>'
-      : panel.svg
+    var showVideo = false; // 整關影片改由 renderJungleVideo 負責；這裡是沒有影片時的圖示＋文字四格故事
+    var visualHtml = panel.svg
         ? '<div class="panel-svg-wrap w-48 sm:w-60 h-48 sm:h-60 rounded-xl bg-white flex items-center justify-center overflow-hidden p-space-sm shadow-md">' + panel.svg + '</div>'
         : '<span class="text-[56px] sm:text-[72px] leading-tight text-center max-w-full px-space-sm drop-shadow-lg">' + panel.emoji + '</span>';
     document.getElementById('jungle-content').innerHTML =
@@ -1932,15 +1883,21 @@
       '<p class="font-headline-md text-headline-md text-on-surface text-center leading-relaxed">' + phoneticText(panel.caption) + '</p>' +
       '</div>' +
       (isSimplified() && !showVideo ? '<button type="button" class="simplified-speak-btn flex items-center gap-1.5 px-space-lg py-space-sm rounded-full bg-primary text-on-primary font-label-md text-label-md shadow-md active:scale-95" data-speak="' + escapeHtml(panel.caption) + '"><span class="material-symbols-outlined text-[22px]">volume_up</span><span>' + phoneticText('再聽一次') + '</span></button>' : '') +
-      '<span class="flex items-center gap-1 text-on-surface-variant font-label-md text-label-md pointer-events-none">' + phoneticText(isLast ? '開始回答' : '滑動或點一下繼續') + ' <span class="material-symbols-outlined text-[22px]">arrow_forward</span></span>' +
+      (isLast
+        ? '<div class="flex flex-wrap items-center justify-center gap-space-sm">' +
+          '<button type="button" id="jungle-panel-replay" class="px-space-lg h-14 rounded-full bg-white text-on-surface font-label-md text-label-md shadow-lg flex items-center gap-1.5">🔄 ' + phoneticText('再看一次') + '</button>' +
+          '<button type="button" id="jungle-panel-answer" class="px-space-lg h-14 rounded-full bg-primary text-on-primary font-label-md text-label-md shadow-lg flex items-center gap-1.5">❓ ' + phoneticText('回答問題') + '</button></div>'
+        : '<span class="flex items-center gap-1 text-on-surface-variant font-label-md text-label-md pointer-events-none">' + phoneticText('滑動或點一下繼續') + ' <span class="material-symbols-outlined text-[22px]">arrow_forward</span></span>') +
       (canGoBack ? '<button type="button" id="jungle-panel-prev" aria-label="上一格" class="absolute left-3 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/90 hover:bg-white flex items-center justify-center shadow-lg z-10"><span class="material-symbols-outlined text-[26px] text-on-surface">chevron_left</span></button>' : '') +
-      '<button type="button" id="jungle-panel-next" aria-label="下一格" class="absolute right-3 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/90 hover:bg-white flex items-center justify-center shadow-lg z-10"><span class="material-symbols-outlined text-[26px] text-on-surface">chevron_right</span></button>' +
+      (isLast ? '' : '<button type="button" id="jungle-panel-next" aria-label="下一格" class="absolute right-3 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/90 hover:bg-white flex items-center justify-center shadow-lg z-10"><span class="material-symbols-outlined text-[26px] text-on-surface">chevron_right</span></button>') +
       '</div>';
     // 有影片時聲音由影片本身負責，不用再疊一層語音朗讀；沒有影片時才用語音朗讀當作退回方案
     if (isSimplified() && !showVideo) speak(panel.caption);
 
     function goNext() {
-      if (isLast) { renderJungleScenario(idx); } else { junglePanelIndex += 1; renderJunglePanels(idx); }
+      if (isLast) return; // 最後一格由「再看一次／回答問題」兩顆按鈕決定下一步
+      junglePanelIndex += 1;
+      renderJunglePanels(idx);
     }
     function goPrev() {
       if (canGoBack) { junglePanelIndex -= 1; renderJunglePanels(idx); }
@@ -1952,6 +1909,10 @@
     if (prevBtn) prevBtn.addEventListener('click', function (e) { e.stopPropagation(); goPrev(); });
     var nextBtn = document.getElementById('jungle-panel-next');
     if (nextBtn) nextBtn.addEventListener('click', function (e) { e.stopPropagation(); goNext(); });
+    var replayBtn = document.getElementById('jungle-panel-replay');
+    if (replayBtn) replayBtn.addEventListener('click', function (e) { e.stopPropagation(); junglePanelIndex = 0; renderJunglePanels(idx); });
+    var answerBtn = document.getElementById('jungle-panel-answer');
+    if (answerBtn) answerBtn.addEventListener('click', function (e) { e.stopPropagation(); renderJungleScenario(idx); });
 
     frame.addEventListener('touchstart', function (e) {
       jungleTouchStartX = e.touches[0].clientX;
@@ -2029,24 +1990,22 @@
         if (choice.correct) {
           prog.completed = true;
           saveState();
-          var indices = unitIndices(sc.unit);
-          var pos = indices.indexOf(idx);
-          var nextIdx = pos < indices.length - 1 ? indices[pos + 1] : null;
+          var nextIdx = idx < SCENARIOS.length - 1 ? idx + 1 : null;
           if (isSimplified()) speak(choice.feedback);
           fb.innerHTML = '<div class="inline-flex items-center gap-space-xs px-space-md py-space-sm rounded-full bg-white/95 shadow-xl">' +
             '<span class="font-label-md text-label-md text-on-surface">' + phoneticText(choice.feedback) + '</span></div>' +
             '<div class="mt-space-sm flex flex-col items-center gap-space-xs">' +
             '<button type="button" id="jungle-next-btn" class="px-space-lg h-14 rounded-full bg-primary text-on-primary font-label-md text-label-md shadow-xl">' +
-            (nextIdx !== null ? phoneticText('下一關') + ' →' : '🎉 ' + phoneticText('完成單元')) + '</button>' +
+            (nextIdx !== null ? phoneticText('下一關') + ' →' : '🎉 ' + phoneticText('全部完成')) + '</button>' +
             '<button type="button" id="jungle-back-list-btn" class="font-label-sm text-label-sm text-white/90 underline underline-offset-2">' + phoneticText('回關卡列表') + '</button>' +
             '</div>';
           document.getElementById('jungle-next-btn').addEventListener('click', function () {
             jungleAnswered = false;
-            if (nextIdx !== null) { startJungleLevel(nextIdx); } else { renderJungleLevels(sc.unit); }
+            if (nextIdx !== null) { startJungleLevel(nextIdx); } else { renderJungleMenu(); }
           });
           document.getElementById('jungle-back-list-btn').addEventListener('click', function () {
             jungleAnswered = false;
-            renderJungleLevels(sc.unit);
+            renderJungleMenu();
           });
         } else {
           prog.wrong += 1;
@@ -2069,9 +2028,30 @@
     });
   }
 
+  // 有 AI 影片的關卡：先看影片，影片下面隨時可以「再看一次」或「回答問題」。影片載入失敗就退回四格故事
+  function renderJungleVideo(idx) {
+    var sc = SCENARIOS[idx];
+    setJungleTint(UNITS[sc.unit].tint);
+    renderJungleLevelBadge(idx);
+    renderJungleDots();
+    document.getElementById('jungle-content').innerHTML =
+      '<video id="jungle-video" src="' + JUNGLE_VIDEOS[idx + 1] + '" controls playsinline autoplay class="w-full max-w-2xl rounded-2xl border-4 border-white/80 shadow-2xl bg-black"></video>' +
+      '<div class="flex flex-wrap items-center justify-center gap-space-sm">' +
+      '<button type="button" id="jungle-video-replay" class="px-space-lg h-14 rounded-full bg-white text-on-surface font-label-md text-label-md shadow-lg flex items-center gap-1.5">🔄 ' + phoneticText('再看一次') + '</button>' +
+      '<button type="button" id="jungle-video-answer" class="px-space-lg h-14 rounded-full bg-primary text-on-primary font-label-md text-label-md shadow-lg flex items-center gap-1.5">❓ ' + phoneticText('回答問題') + '</button></div>';
+    var v = document.getElementById('jungle-video');
+    v.addEventListener('error', function () {
+      if (jungleScreen === 'play' && jungleActiveIdx === idx) { delete JUNGLE_VIDEOS[idx + 1]; enterScenario(idx); }
+    });
+    document.getElementById('jungle-video-replay').addEventListener('click', function () { v.currentTime = 0; var pr = v.play(); if (pr && pr.catch) pr.catch(function () {}); });
+    document.getElementById('jungle-video-answer').addEventListener('click', function () { v.pause(); renderJungleScenario(idx); });
+  }
+
   function enterScenario(idx) {
     junglePanelIndex = 0;
-    if (SCENARIOS[idx].panels && SCENARIOS[idx].panels.length) {
+    if (JUNGLE_VIDEOS[idx + 1]) {
+      renderJungleVideo(idx);
+    } else if (SCENARIOS[idx].panels && SCENARIOS[idx].panels.length) {
       renderJunglePanels(idx);
     } else {
       renderJungleScenario(idx);
