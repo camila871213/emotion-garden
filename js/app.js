@@ -1888,14 +1888,14 @@
       '<h1 class="font-headline-lg text-headline-lg text-white drop-shadow-lg">' + phoneticText('叢林冒險') + '</h1>' +
       '<p class="font-body-md text-body-md text-white/90 drop-shadow">' + phoneticText('選一關開始！') + '</p>' +
       (allDone ? '<div class="inline-flex items-center gap-1.5 px-space-md py-1.5 rounded-full bg-white/90 text-primary font-label-md text-label-md shadow-md">🏆 ' + phoneticText('全部關卡都完成囉！') + '</div>' : '') +
-      '<div class="grid grid-cols-3 sm:grid-cols-5 gap-space-sm w-full max-w-3xl mt-space-sm">' +
+      '<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-space-lg gap-y-space-lg w-full max-w-5xl mt-space-md px-space-sm">' +
       SCENARIOS.map(function (_, gi) {
         var prog = jungleProg(gi);
         var unlocked = isScenarioUnlocked(gi);
         var stateCls = prog.completed ? 'bg-white text-on-surface' : unlocked ? 'bg-white/90 text-on-surface hover:bg-white active:scale-95' : 'bg-white/30 text-white/70 cursor-not-allowed';
-        return '<button type="button" data-idx="' + gi + '" ' + (unlocked ? '' : 'disabled') + ' class="jungle-level-btn flex flex-col items-center gap-1 px-space-sm py-space-lg rounded-xl shadow-lg transition-all ' + stateCls + '">' +
+        return '<button type="button" data-idx="' + gi + '" ' + (unlocked ? '' : 'disabled') + ' class="jungle-level-btn flex flex-col items-center justify-center gap-1 px-space-md py-space-md min-h-[104px] rounded-2xl shadow-lg transition-all ' + stateCls + '">' +
           '<span class="text-[24px] leading-none">' + (prog.completed ? '✅' : unlocked ? '▶️' : '🔒') + '</span>' +
-          '<span class="font-label-md text-label-md font-bold">' + levelText(gi + 1) + '</span>' +
+          '<span class="font-label-md text-label-md font-bold sm:whitespace-nowrap">' + levelText(gi + 1) + '</span>' +
           (prog.completed ? '<span class="text-[12px]">' + phoneticText('重玩練習') + '</span>' : '') +
           '</button>';
       }).join('') + '</div>';
