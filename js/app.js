@@ -760,6 +760,7 @@
           '</button>';
       }).join('');
       wrap.querySelectorAll('.diary-mood-btn').forEach(function (btn) {
+        if (state.lastEntryDate === todayStr()) { btn.disabled = true; return; } // 今天的心情已送出，不能再改
         btn.addEventListener('click', function () {
           diarySelectedMood = btn.dataset.mood;
           speak('我覺得' + DIARY_SIMPLE[diarySelectedMood].word); // 點擊當下念，iOS 需要使用者手勢
@@ -780,6 +781,7 @@
         '</button>';
     }).join('');
     wrap.querySelectorAll('.diary-mood-btn').forEach(function (btn) {
+      if (state.lastEntryDate === todayStr()) { btn.disabled = true; return; } // 今天的心情已送出，不能再改
       btn.addEventListener('click', function () {
         diarySelectedMood = btn.dataset.mood;
         renderDiaryMoodPicker();
@@ -788,10 +790,31 @@
     });
   }
 
+  // 今天已經送出的那一筆日記（心情送出後，還可以回來補寫今天的小事）
+  function todayEntry() {
+    if (state.lastEntryDate !== todayStr()) return null;
+    for (var i = state.diaryEntries.length - 1; i >= 0; i--) {
+      if (state.diaryEntries[i].date === todayStr()) return state.diaryEntries[i];
+    }
+    return null;
+  }
+  // 步驟 2 有沒有地方可以輸入：簡單版沒有語音辨識時整張卡片隱藏
+  function diaryTextInputAvailable() { return !(activeDifficulty === 'easy' && !SpeechRec); }
+
   function updateDiarySubmitState() {
     var btn = document.getElementById('diary-submit-btn');
     var label = document.getElementById('diary-submit-label');
     var alreadyToday = state.lastEntryDate === todayStr();
+    if (alreadyToday && todayEntry() && diaryTextInputAvailable()) {
+      // 心情已送出，但還能補寫（第一次補寫再得 1 滴）或修改今天的日記
+      var entry = todayEntry();
+      var t = document.getElementById('diary-journal-input').value.trim();
+      var firstAdd = entry.drops < 2;
+      btn.disabled = !t || (!firstAdd && t === entry.text);
+      if (isSimplified()) label.innerHTML = firstAdd ? phoneticText('補寫完成，再得一滴甘露') : phoneticText('儲存修改');
+      else label.textContent = firstAdd ? '補寫完成，再獲得 1 滴甘露' : '儲存修改';
+      return;
+    }
     if (isSimplified()) {
       btn.disabled = alreadyToday || !diarySelectedMood;
       var hasText = !!document.getElementById('diary-journal-input').value.trim() || (activeDifficulty === 'easy' && !SpeechRec);
@@ -854,37 +877,81 @@
     return div.innerHTML;
   }
 
+  function setDiaryCharCount(n) {
+    var el = document.getElementById('diary-char-count');
+    if (isSimplified()) el.innerHTML = phoneticText('已記錄') + ' ' + n + ' ' + phoneticText('字');
+    else el.textContent = '已記錄 ' + n + ' 字';
+  }
+
   function renderDiary() {
     refreshDewBadges();
     diarySelectedMood = null;
     setDiaryChrome();
-    renderDiaryMoodPicker();
-    document.getElementById('diary-journal-input').value = '';
-    document.getElementById('diary-char-count').textContent = '已記錄 0 字';
-    updateDiaryReplay();
     var alreadyToday = state.lastEntryDate === todayStr();
+    var entry = todayEntry();
+    if (entry) diarySelectedMood = entry.mood; // 今天已送出的心情：顯示選好的樣子，不能再改
+    var prefill = (entry && diaryTextInputAvailable()) ? (entry.text || '') : '';
+    document.getElementById('diary-journal-input').value = prefill;
+    setDiaryCharCount(prefill.length);
+    renderDiaryMoodPicker();
+    updateDiaryReplay();
+    var canAddText = !!entry && entry.drops < 2 && diaryTextInputAvailable(); // 心情已送出但還沒補寫小事
     if (isSimplified()) {
       document.getElementById('diary-stage-badge').textContent = '💧 ' + state.growthStage + ' / 6';
-      document.getElementById('diary-lock-msg').innerHTML = alreadyToday ? phoneticText('今天完成了，明天再來！') : '';
+      document.getElementById('diary-lock-msg').innerHTML = !alreadyToday ? '' : (canAddText ? phoneticText('想補寫今天的事，再得一滴甘露！') : phoneticText('今天完成了，明天再來！'));
     } else {
       document.getElementById('diary-stage-badge').textContent = '目前小樹進度 · ' + state.growthStage + '/6 滴甘霖';
-      document.getElementById('diary-lock-msg').textContent = alreadyToday
-        ? '今天已經完成澆灌了，明天再一起繼續記錄心情吧！'
-        : '每一次坦率面對自己的感受，都在滋養心靈裡最勇敢的種子。';
+      document.getElementById('diary-lock-msg').textContent = !alreadyToday
+        ? '每一次坦率面對自己的感受，都在滋養心靈裡最勇敢的種子。'
+        : (canAddText ? '今天的心情已經記錄好了！想補寫今天發生的事，可以在下面寫，再獲得 1 滴甘露。' : '今天已經完成澆灌了，明天再一起繼續記錄心情吧！');
     }
     updateDiarySubmitState();
     renderDiaryHistory();
   }
 
   document.getElementById('diary-journal-input').addEventListener('input', function (e) {
-    document.getElementById('diary-char-count').textContent = '已記錄 ' + e.target.value.trim().length + ' 字';
+    setDiaryCharCount(e.target.value.trim().length);
     updateDiaryReplay();
     updateDiarySubmitState();
   });
 
   document.getElementById('diary-submit-btn').addEventListener('click', function () {
-    if (!diarySelectedMood || state.lastEntryDate === todayStr()) return;
     var simple = isSimplified();
+    if (state.lastEntryDate === todayStr()) {
+      // 今天的心情已經送出：這裡是補寫（第一次補寫再得 1 滴）或修改今天的日記
+      var entry = todayEntry();
+      if (!entry || !diaryTextInputAvailable()) return;
+      var newText = document.getElementById('diary-journal-input').value.trim();
+      if (!newText || newText === entry.text) return;
+      stopDictation();
+      var gained = entry.drops < 2;
+      entry.text = newText;
+      if (gained) { entry.drops += 1; state.waterInventory += 1; }
+      saveState();
+      renderDiary();
+      refreshDewBadges();
+      if (gained) playSuccess();
+      if (simple) {
+        speak(gained ? '寫好了！再得一滴甘露！' : '日記已更新');
+        showModal(
+          '<div class="text-center space-y-space-sm">' +
+          '<span class="material-symbols-outlined text-tertiary" style="font-size:48px;">' + (gained ? 'celebration' : 'check_circle') + '</span>' +
+          '<h2 class="text-[26px] font-bold text-primary">' + (gained ? phoneticText('寫好了！') + ' ' + phoneticText('再得一滴甘露！') : phoneticText('日記已更新')) + '</h2>' +
+          '<button class="w-full h-14 rounded-full bg-primary text-on-primary text-[20px]" onclick="closeModal()">' + phoneticText('好') + '</button>' +
+          '</div>'
+        );
+      } else {
+        showModal(
+          '<div class="text-center space-y-space-sm">' +
+          '<span class="material-symbols-outlined text-tertiary" style="font-size:48px;">' + (gained ? 'celebration' : 'check_circle') + '</span>' +
+          '<h2 class="font-headline-sm text-headline-sm text-primary">' + (gained ? '補寫成功！又獲得 1 滴甘露' : '今天的日記已更新') + '</h2>' +
+          '<button class="w-full h-12 rounded-full bg-primary text-on-primary font-label-md text-label-md" onclick="closeModal()">好的</button>' +
+          '</div>'
+        );
+      }
+      return;
+    }
+    if (!diarySelectedMood) return;
     stopDictation();
     var text = document.getElementById('diary-journal-input').value.trim();
     // 三種難度規則一致：選心情 +1 滴、說（或寫）了小事再 +1 滴。唯一例外：簡單版的瀏覽器不支援語音辨識時，沒辦法輸入，直接給 2 滴
