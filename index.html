@@ -70,7 +70,7 @@ tailwind.config={darkMode:"class",theme:{extend:{
         <circle cx="40" cy="22" r="3" fill="#DFA89B"/>
       </svg>
       <div class="flex flex-col">
-        <span class="font-headline-sm text-headline-sm text-primary leading-none" data-zy="心靈植癒園">心靈植癒園</span>
+        <span class="font-headline-sm text-headline-sm text-primary leading-none whitespace-nowrap" data-zy="心靈植癒園">心靈植癒園</span>
         <span class="font-label-sm text-label-sm text-on-surface-variant mt-space-xxs" data-zy="">今天的心情花園</span>
       </div>
     </div>
@@ -85,7 +85,7 @@ tailwind.config={darkMode:"class",theme:{extend:{
     <div class="flex items-center gap-space-xs">
       <button type="button" id="profile-switch-btn" class="flex items-center gap-1.5 pl-1.5 pr-space-sm h-10 rounded-full bg-surface-container-low hover:bg-surface-container-high transition-colors" title="切換使用者">
         <span class="w-7 h-7 rounded-full bg-primary-fixed flex items-center justify-center text-[16px]" id="profile-switch-avatar">🌱</span>
-        <span class="font-label-sm text-label-sm text-on-surface" id="profile-switch-name">訪客</span>
+        <span class="font-label-sm text-label-sm text-on-surface whitespace-nowrap" id="profile-switch-name">訪客</span>
       </button>
       <button aria-label="靜心音樂開關" id="ambient-toggle-btn" class="flex items-center justify-center w-10 h-10 rounded-full bg-surface-container-low text-primary hover:bg-surface-container-high hover:text-on-surface transition-colors" type="button">
         <span class="material-symbols-outlined text-[20px]" id="ambient-toggle-icon">volume_off</span>
@@ -501,7 +501,7 @@ tailwind.config={darkMode:"class",theme:{extend:{
 
   <!-- ============ 6. 叢林冒險（滿版沉浸式，文字僅作輔助） ============ -->
   <section class="view" data-view="jungle" id="view-jungle" hidden>
-    <div class="relative w-full overflow-hidden flex flex-col bg-gradient-to-b from-[#1e3a2b] to-[#0f2016]" style="min-height: max(560px, calc(100vh - 9rem));" id="jungle-stage">
+    <div class="relative w-full overflow-hidden flex flex-col bg-gradient-to-b from-[#1e3a2b] to-[#0f2016]" style="min-height: max(560px, calc(100vh - var(--header-h, 9rem)));" id="jungle-stage">
       <!-- 背景圖層：原本這裡是 Stitch 匯出時給的 Google 暫存圖片連結，現在連結已失效(403)，先用深綠漸層當保底背景，避免變全黑；img 保留 onerror 隱藏避免顯示壞圖示 -->
       <div class="absolute inset-0 w-full h-full overflow-hidden">
         <img id="jungle-bg-img" alt="" onerror="this.style.display='none'" class="w-full h-full object-cover transition-all duration-700" src="https://lh3.googleusercontent.com/aida/AEtjO1WRsX8yZM3r7dtxXDElvokKqRRmAcAvgGHHW3tp82Ucg1HPOjI3B3b1Rb4710M_w4j38MCP3uIAMCn5Ups9OzBVhYIqEOpq_ksdb7MBJtw3iPc8IR9_m_ul6lFKvHBNRte3HUrIcvqe3ZXudromJrePXiP9hfBnbwEsoY-7ztw6XZBzHzp_uTNBwaiwWbmRwYPkxN-9aIW8UWrw2ylCba0OpphIimnRHMFH4cPooM99pSFhb1hYtSpkxag"/>

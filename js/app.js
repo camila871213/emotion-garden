@@ -134,8 +134,21 @@
 
   // 固定在 index.html 裡的文字：標了 data-zy="簡化版文字" 的元素，簡單／中等難度會換成注音版，困難難度維持原文。
   // 再加上 data-zy-speak 的元素，簡單／中等難度會多一個小喇叭圖示，點一下就念出來。
+  // 頁首高度會因注音字級、導覽排成一列或兩列而變，內容區的上邊距跟著實際高度走
+  function syncHeaderOffset() {
+    var h = document.querySelector('#app-shell > header');
+    if (h) document.documentElement.style.setProperty('--header-h', h.offsetHeight + 'px');
+  }
+  (function () {
+    var h = document.querySelector('#app-shell > header');
+    if (h && window.ResizeObserver) new ResizeObserver(syncHeaderOffset).observe(h);
+    window.addEventListener('resize', syncHeaderOffset);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(syncHeaderOffset);
+  })();
+
   function applyChromeZhuyin() {
     var simple = isSimplified();
+    document.documentElement.classList.toggle('zy-mode', simple);
     document.querySelectorAll('[data-zy]').forEach(function (el) {
       if (el.dataset.orig === undefined) el.dataset.orig = el.innerHTML;
       var speakable = el.hasAttribute('data-zy-speak');
@@ -148,6 +161,7 @@
         (speakable ? ' <span class="material-symbols-outlined text-[24px] align-middle text-primary">volume_up</span>' : '');
       if (speakable) { el.classList.add('simplified-speak-btn', 'cursor-pointer'); el.dataset.speak = el.dataset.zy; }
     });
+    syncHeaderOffset();
   }
 
   function loadProfiles() {

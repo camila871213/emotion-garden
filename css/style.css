@@ -213,3 +213,30 @@ button:active:not(:disabled), a.nav-link:active, a.nav-link-mobile:active {
   pointer-events: none;
   animation: tapRipple 0.5s ease-out forwards;
 }
+
+/* 頁首：內容區上邊距＝頁首實際高度（由 app.js 量出，寫進 --header-h） */
+#app-shell > main { padding-top: var(--header-h, 5rem) !important; }
+
+/* 導覽列：簡單／中等難度注音字很大，一列放不下，不論螢幕大小都用「第二列導覽」；
+   困難難度在 1280px 以下（平板）也一樣，避免導覽文字折行，平板和電腦看起來一致 */
+html.zy-mode #main-nav { display: none !important; }
+html.zy-mode #main-nav-mobile {
+  display: flex !important;
+  justify-content: center;
+  gap: 0.5rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.5rem;
+  overflow-x: auto;
+}
+html.zy-mode .nav-link-mobile { padding: 0.25rem 1rem; flex: 0 0 auto; }
+@media (max-width: 1279px) {
+  #main-nav { display: none !important; }
+  #main-nav-mobile {
+    display: flex !important;
+    justify-content: center;
+    gap: 0.5rem;
+    padding-bottom: 0.5rem;
+    overflow-x: auto;
+  }
+  .nav-link-mobile { flex: 0 0 auto; padding-left: 1rem; padding-right: 1rem; }
+}
