@@ -57,8 +57,24 @@
   function isSimplified() { return activeDifficulty === 'easy' || activeDifficulty === 'medium'; }
 
   // 語音朗讀：iOS 上 speechSynthesis 需要使用者手勢才會發聲，所以一律只在既有的點擊事件裡呼叫，不做畫面一出現就自動念
+  // 朗讀前整理文字：
+  //  1. 拿掉表情符號、裝飾符號（不然語音會把 ❤️ 念成「愛心」）和注音用的讀音選擇碼
+  //  2. 朗讀引擎會念錯的字，只在「朗讀時」換成同音字，畫面上的字不變
+  var SPEECH_FIXES = [
+    [/考卷/g, '考絹']   // 引擎把「考卷」的卷念成ㄐㄩㄢˇ，正確是ㄐㄩㄢˋ；「絹」也念ㄐㄩㄢˋ
+  ];
+  function speechText(text) {
+    var t = String(text)
+      .replace(/[\u{E0100}-\u{E01EF}\uFE00-\uFE0F\u200D\u20E3]/gu, '')            // 讀音選擇碼、變體選擇符、零寬連接符
+      .replace(/[\p{Extended_Pictographic}\p{Emoji_Presentation}]/gu, ' ')           // 表情符號
+      .replace(/[♥♡❤★☆✦✧✨✓✔✕✖→←↑↓•◆◇■□●○▶◀▲▼※♪♫]/g, ' ');                      // 常見裝飾符號
+    SPEECH_FIXES.forEach(function (f) { t = t.replace(f[0], f[1]); });
+    return t.replace(/\s+/g, ' ').trim();
+  }
   function speak(text) {
     if (!text || !('speechSynthesis' in window)) return;
+    text = speechText(text);
+    if (!text) return;
     window.speechSynthesis.cancel(); // 避免上一句還沒念完，新的一句就疊上來搶著念
     var u = new SpeechSynthesisUtterance(text);
     u.lang = 'zh-TW';
