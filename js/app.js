@@ -206,9 +206,13 @@
 
   var state = null;
 
+  var LAST_ACTIVITY_KEY = 'eg_last_activity_v1'; // 最後一次有新紀錄的時間（用來判斷「上次備份後有沒有新資料」）
   function saveState() {
     localStorage.setItem(stateKeyFor(activeProfileId), JSON.stringify(state));
+    try { localStorage.setItem(LAST_ACTIVITY_KEY, new Date().toISOString()); } catch (e) {}
   }
+  // 請瀏覽器把這個網站的資料標成「永久保存」，儲存空間吃緊或久未開啟時比較不會被自動清掉（不一定會被同意）
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
 
   function dominantMood() {
     if (!state.moodHistory.length) return 'sunny';
@@ -2435,7 +2439,7 @@
       return;
     }
     var today = todayStr();
-    var fullBackup = { exportedAt: new Date().toISOString(), profiles: [] };
+    var fullBackup = buildFullBackup();
     var diaryRows = [['學生姓名', '日期', '心情', '日記內容', '獲得水滴']];
     var summaryRows = [['學生姓名', '目前盆栽階段(0-6)', '目前甘露庫存', '已解鎖仙子數(共5)', '累計孵化次數', '日記篇數', '建立日期']];
     var jungleRows = [['學生姓名', '總完成關卡(共' + SCENARIOS.length + ')'].concat(
@@ -2444,7 +2448,6 @@
 
     profiles.forEach(function (p) {
       var st = loadState(p.id);
-      fullBackup.profiles.push({ id: p.id, name: p.name, avatar: p.avatar, createdAt: p.createdAt, state: st });
       st.diaryEntries.forEach(function (e) {
         var moodLabel = (MOODS[e.mood] && MOODS[e.mood].label) || e.mood;
         diaryRows.push([p.name, e.date, moodLabel, e.text || '', e.drops]);
@@ -2461,21 +2464,209 @@
       .concat(jungleRows.length > 1 ? [[], ['— 叢林學習成效 —']].concat(jungleRows) : []);
     var diaryCsv = '﻿' + sections.map(function (row) { return row.map(csvEscape).join(','); }).join('\r\n');
 
+    var jsonText = JSON.stringify(fullBackup, null, 2);
+    var jsonName = '心靈植癒園_完整備份_' + today + '.json';
     downloadBlob('心靈植癒園_學生資料_' + today + '.csv', 'text/csv', diaryCsv);
-    setTimeout(function () {
-      downloadBlob('心靈植癒園_完整備份_' + today + '.json', 'application/json', JSON.stringify(fullBackup, null, 2));
-    }, 400);
+    setTimeout(function () { downloadBlob(jsonName, 'application/json', jsonText); }, 400);
+    markBackedUp();
 
+    var canShare = false;
+    try { canShare = !!(navigator.share && navigator.canShare && navigator.canShare({ files: [new File(['{}'], 'a.json', { type: 'application/json' })] })); } catch (e) {}
     showModal(
       '<div class="text-center space-y-space-md">' +
       '<span class="material-symbols-outlined text-primary" style="font-size:48px;">download_done</span>' +
       '<h2 class="font-headline-sm text-headline-sm text-primary">已匯出 ' + profiles.length + ' 位學生的資料</h2>' +
       '<p class="font-body-sm text-body-sm text-on-surface-variant text-left">下載了兩個檔案：<br>' +
       '・CSV(可用 Excel 開啟，含日記內容、總覽與叢林學習成效)<br>' +
-      '・JSON(完整備份，供之後還原用)</p>' +
+      '・JSON(完整備份，含密碼與難度，可用「從備份還原」匯回)<br>' +
+      '請再把 JSON 存一份到電腦或雲端硬碟，不要只留在平板上。</p>' +
+      (canShare ? '<button type="button" id="backup-share-btn" class="w-full h-12 rounded-full bg-secondary-fixed text-secondary font-label-md text-label-md">☁️ 傳到雲端硬碟／檔案／AirDrop</button>' : '') +
       '<button class="w-full h-12 rounded-full bg-primary text-on-primary font-label-md text-label-md" onclick="closeModal()">好的</button>' +
       '</div>'
     );
+    var shareBtn = document.getElementById('backup-share-btn');
+    if (shareBtn) shareBtn.addEventListener('click', function () {
+      navigator.share({ files: [new File([jsonText], jsonName, { type: 'application/json' })], title: jsonName }).catch(function () {});
+    });
+  }
+
+  // ---------- 備份、還原、學生管理、資料保護 ----------
+  var LAST_BACKUP_KEY = 'eg_last_backup_v1';
+  var SNAPSHOT_KEY = 'eg_pre_restore_snapshot_v1';
+
+  // 完整備份（含密碼與難度，才能原樣還原）
+  function buildFullBackup() {
+    return {
+      app: 'emotion-garden', version: 2, exportedAt: new Date().toISOString(),
+      profiles: loadProfiles().map(function (p) {
+        return { id: p.id, name: p.name, avatar: p.avatar, createdAt: p.createdAt, pin: p.pin || '', difficulty: p.difficulty || 'hard', state: loadState(p.id) };
+      })
+    };
+  }
+  function markBackedUp() { try { localStorage.setItem(LAST_BACKUP_KEY, new Date().toISOString()); } catch (e) {} }
+
+  // 備份狀態：沒有學生資料 → ok；從未備份，或備份後又有新紀錄 → stale
+  function backupStatus() {
+    var hasData = loadProfiles().length > 0;
+    var lastBackup = localStorage.getItem(LAST_BACKUP_KEY);
+    var lastActivity = localStorage.getItem(LAST_ACTIVITY_KEY);
+    var days = lastBackup ? Math.floor((Date.now() - new Date(lastBackup).getTime()) / 86400000) : null;
+    var stale = hasData && (!lastBackup || (lastActivity && lastActivity > lastBackup));
+    var text = !hasData ? '還沒有學生資料' :
+      !lastBackup ? '⚠️ 還沒備份過' :
+      (stale ? '⚠️ 上次備份後又有新紀錄' : '✅ 已備份') + '（' + (days === 0 ? '今天' : days + ' 天前') + '）';
+    return { stale: stale, text: text, hasData: hasData };
+  }
+  function refreshTeacherBtnHint() {
+    var btn = document.getElementById('teacher-area-btn');
+    if (btn) btn.textContent = (backupStatus().stale ? '⚠️ ' : '') + '🔒 老師專用';
+  }
+
+  function modalInfo(title, bodyHtml) {
+    showModal('<div class="text-center space-y-space-md"><h2 class="font-headline-sm text-headline-sm text-primary">' + title + '</h2>' +
+      '<div class="font-body-sm text-body-sm text-on-surface-variant text-left space-y-space-xs">' + bodyHtml + '</div>' +
+      '<button type="button" class="w-full h-12 rounded-full bg-primary text-on-primary font-label-md text-label-md" onclick="closeModal()">好的</button></div>');
+  }
+
+  // 從備份檔還原：不會動沒選到的學生；覆蓋前先在本機留一份目前資料的快照
+  function openRestorePicker() {
+    var input = document.createElement('input');
+    input.type = 'file'; input.accept = '.json,application/json'; input.style.display = 'none';
+    document.body.appendChild(input);
+    input.addEventListener('change', function () {
+      var file = input.files && input.files[0];
+      document.body.removeChild(input);
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function () {
+        var data = null;
+        try { data = JSON.parse(reader.result); } catch (e) {}
+        var list = data && Array.isArray(data.profiles) ? data.profiles.filter(function (bp) {
+          return bp && typeof bp.id === 'string' && bp.state && typeof bp.state === 'object' && Array.isArray(bp.state.diaryEntries);
+        }) : [];
+        if (!list.length) { modalInfo('這個檔案不能還原', '<p>讀不到學生資料。請選「完整備份_日期.json」那個檔案（不是 CSV）。</p>'); return; }
+        showRestoreConfirm(list);
+      };
+      reader.readAsText(file);
+    });
+    input.click();
+  }
+
+  function showRestoreConfirm(list) {
+    var local = loadProfiles();
+    var rows = list.map(function (bp, i) {
+      var ex = local.filter(function (x) { return x.id === bp.id; })[0];
+      var bc = bp.state.diaryEntries.length;
+      var lc = ex ? loadState(ex.id).diaryEntries.length : 0;
+      var newer = ex && lc > bc;
+      var tag = !ex ? '新增到這台平板' : (newer ? '⚠️ 這台目前資料比備份新（日記 ' + lc + ' 篇 > 備份 ' + bc + ' 篇）' : '覆蓋這台的資料（日記 ' + lc + ' 篇 → 備份 ' + bc + ' 篇）');
+      return '<label class="flex items-start gap-space-sm p-space-sm rounded-lg bg-surface-container-low text-left">' +
+        '<input type="checkbox" class="restore-check mt-1 w-5 h-5" data-i="' + i + '"' + (newer ? '' : ' checked') + ' />' +
+        '<span><span class="font-label-md text-label-md text-on-surface">' + escapeHtml(bp.avatar || '') + ' ' + escapeHtml(bp.name || '學生') + '</span><br>' +
+        '<span class="font-label-sm text-label-sm ' + (newer ? 'text-error' : 'text-on-surface-variant') + '">' + tag + '</span></span></label>';
+    }).join('');
+    showModal('<div class="space-y-space-md"><h2 class="font-headline-sm text-headline-sm text-primary text-center">📤 從備份還原</h2>' +
+      '<p class="font-body-sm text-body-sm text-on-surface-variant">勾選要還原的學生。沒勾的不會動。還原前會先在這台留一份目前資料的快照。</p>' +
+      '<div class="space-y-space-xs">' + rows + '</div>' +
+      '<button type="button" id="restore-go-btn" class="w-full h-12 rounded-full bg-primary text-on-primary font-label-md text-label-md">確定還原</button>' +
+      '<button type="button" class="w-full h-10 text-on-surface-variant font-label-sm text-label-sm underline" onclick="closeModal()">取消</button></div>');
+    document.getElementById('restore-go-btn').addEventListener('click', function () {
+      var picked = Array.prototype.slice.call(document.querySelectorAll('.restore-check:checked')).map(function (c) { return list[+c.dataset.i]; });
+      if (!picked.length) return;
+      applyRestore(picked);
+    });
+  }
+
+  function applyRestore(picked) {
+    try { localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(buildFullBackup())); } catch (e) {}
+    var profiles = loadProfiles();
+    var needFix = 0;
+    picked.forEach(function (bp) {
+      var idx = -1;
+      profiles.forEach(function (x, k) { if (x.id === bp.id) idx = k; });
+      var ex = idx >= 0 ? profiles[idx] : null;
+      var np = {
+        id: bp.id,
+        name: bp.name || (ex && ex.name) || '學生',
+        avatar: bp.avatar || (ex && ex.avatar) || '🌱',
+        createdAt: bp.createdAt || (ex && ex.createdAt) || Date.now(),
+        pin: typeof bp.pin === 'string' ? bp.pin : (ex ? ex.pin : ''),
+        difficulty: bp.difficulty || (ex ? ex.difficulty : 'hard')
+      };
+      if (!bp.difficulty && !ex) needFix++;
+      if (idx >= 0) profiles[idx] = np; else profiles.push(np);
+      localStorage.setItem(stateKeyFor(bp.id), JSON.stringify(bp.state));
+    });
+    saveProfiles(profiles);
+    renderProfileList();
+    refreshTeacherBtnHint();
+    modalInfo('還原完成', '<p>已還原 ' + picked.length + ' 位學生。</p>' +
+      (needFix ? '<p class="text-error">其中 ' + needFix + ' 位的備份檔是舊版格式，沒有難度與密碼：難度暫設為「困難」，學生登入時會重新設定密碼。請到老師專用的「管理學生」調整難度。</p>' : ''));
+  }
+
+  // 管理學生：改難度、重設密碼
+  function renderManageStudents() {
+    var profiles = loadProfiles();
+    if (!profiles.length) { modalInfo('管理學生', '<p>目前還沒有學生。</p>'); return; }
+    var rows = profiles.map(function (p) {
+      return '<div class="flex items-center gap-space-sm p-space-sm rounded-lg bg-surface-container-low" data-id="' + p.id + '">' +
+        '<span class="text-[24px]">' + escapeHtml(p.avatar) + '</span>' +
+        '<span class="flex-1 text-left font-label-md text-label-md text-on-surface">' + escapeHtml(p.name) + '</span>' +
+        '<select class="manage-diff h-10 rounded-lg bg-surface px-2 font-label-sm text-label-sm">' +
+        DIFFICULTY_CHOICES.map(function (d) { return '<option value="' + d.id + '"' + ((p.difficulty || 'hard') === d.id ? ' selected' : '') + '>' + d.icon + ' ' + d.label + '</option>'; }).join('') +
+        '</select>' +
+        '<button type="button" class="manage-pin h-10 px-3 rounded-lg bg-surface text-on-surface-variant font-label-sm text-label-sm">重設密碼</button></div>';
+    }).join('');
+    showModal('<div class="space-y-space-md"><h2 class="font-headline-sm text-headline-sm text-primary text-center">👤 管理學生</h2>' +
+      '<p class="font-body-sm text-body-sm text-on-surface-variant">改難度：下次登入就會套用，日記和澆水紀錄不受影響。重設密碼：該生下次登入時重新設定。</p>' +
+      '<div class="space-y-space-xs">' + rows + '</div><p id="manage-msg" class="font-label-sm text-label-sm text-primary text-center min-h-[1.25rem]"></p>' +
+      '<button type="button" class="w-full h-12 rounded-full bg-primary text-on-primary font-label-md text-label-md" onclick="closeModal()">完成</button></div>');
+    var body = document.getElementById('app-modal-body');
+    body.querySelectorAll('.manage-diff').forEach(function (sel) {
+      sel.addEventListener('change', function () {
+        var id = sel.closest('[data-id]').dataset.id;
+        var list = loadProfiles();
+        list.forEach(function (x) { if (x.id === id) x.difficulty = sel.value; });
+        saveProfiles(list);
+        document.getElementById('manage-msg').textContent = '已更新難度';
+      });
+    });
+    body.querySelectorAll('.manage-pin').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = btn.closest('[data-id]').dataset.id;
+        var list = loadProfiles();
+        list.forEach(function (x) { if (x.id === id) x.pin = ''; });
+        saveProfiles(list);
+        document.getElementById('manage-msg').textContent = '已重設，該生下次登入時會請他設定新密碼';
+      });
+    });
+  }
+
+  // 資料保護狀態：一次看完「資料有沒有可能不見」的幾個關卡
+  function renderDataProtection() {
+    var standalone = window.navigator.standalone === true || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+    var persisted = (navigator.storage && navigator.storage.persisted) ? navigator.storage.persisted() : Promise.resolve(false);
+    persisted.then(function (ok) {
+      if (ok || !(navigator.storage && navigator.storage.persist)) return ok;
+      return navigator.storage.persist();
+    }).catch(function () { return false; }).then(function (persistOk) {
+      var est = (navigator.storage && navigator.storage.estimate) ? navigator.storage.estimate().catch(function () { return null; }) : Promise.resolve(null);
+      est.then(function (e) {
+        var profiles = loadProfiles();
+        var diaries = profiles.reduce(function (n, p) { return n + loadState(p.id).diaryEntries.length; }, 0);
+        var bs = backupStatus();
+        function row(ok, label, hint) {
+          return '<div class="p-space-sm rounded-lg bg-surface-container-low"><span class="font-label-md text-label-md text-on-surface">' + (ok ? '✅ ' : '⚠️ ') + label + '</span>' +
+            (hint ? '<br><span class="font-label-sm text-label-sm text-on-surface-variant">' + hint + '</span>' : '') + '</div>';
+        }
+        modalInfo('🛡️ 資料保護狀態',
+          row(standalone, standalone ? '用「主畫面 App」開啟' : '目前是在瀏覽器分頁開啟', standalone ? '' : 'Safari 分頁超過約 7 天沒開，資料可能被系統清掉。請「加入主畫面」，並從主畫面圖示開啟（要在主畫面 App 裡建學生，兩邊的資料是分開的）。') +
+          row(persistOk, persistOk ? '瀏覽器已同意永久保存' : '瀏覽器尚未同意永久保存', persistOk ? '' : '不影響使用，但要更依賴備份。加入主畫面後通常比較容易被同意。') +
+          row(!bs.stale && bs.hasData, '備份：' + bs.text.replace(/^(✅|⚠️) /, ''), '每堂課後到老師專用「匯出所有學生資料」，並把 JSON 存到電腦或雲端硬碟。') +
+          row(true, '目前有 ' + profiles.length + ' 位學生、' + diaries + ' 篇日記', e && e.usage ? '約佔用 ' + Math.max(1, Math.round(e.usage / 1024)) + ' KB' : '') +
+          '<div class="p-space-sm rounded-lg bg-surface-container-low font-label-sm text-label-sm text-on-surface-variant">平板上請不要按「清除瀏覽記錄與網站資料」、不要用無痕模式；若學校平板會定期還原系統，先確認這台不會被重置。</div>');
+      });
+    });
   }
 
   function renderTeacherDashboard() {
@@ -2518,15 +2709,23 @@
   var TEACHER_PIN_KEY = 'eg_teacher_pin_v1';
 
   function renderTeacherMenu() {
+    var bs = backupStatus();
     showModal(
       '<div class="text-center space-y-space-md">' +
       '<h2 class="font-headline-sm text-headline-sm text-primary">🔒 老師專用工具</h2>' +
+      '<p class="font-label-sm text-label-sm ' + (bs.stale ? 'text-error' : 'text-on-surface-variant') + '">備份狀態：' + bs.text + '</p>' +
       '<button type="button" id="teacher-menu-dashboard-btn" class="w-full h-14 rounded-full bg-primary text-on-primary font-label-md text-label-md">📊 查看學生學習成效</button>' +
-      '<button type="button" id="teacher-menu-export-btn" class="w-full h-14 rounded-full bg-surface-container text-on-surface font-label-md text-label-md">📥 匯出所有學生資料</button>' +
+      '<button type="button" id="teacher-menu-manage-btn" class="w-full h-14 rounded-full bg-surface-container text-on-surface font-label-md text-label-md">👤 管理學生（改難度／重設密碼）</button>' +
+      '<button type="button" id="teacher-menu-export-btn" class="w-full h-14 rounded-full ' + (bs.stale ? 'bg-primary text-on-primary' : 'bg-surface-container text-on-surface') + ' font-label-md text-label-md">📥 匯出所有學生資料（備份）</button>' +
+      '<button type="button" id="teacher-menu-restore-btn" class="w-full h-14 rounded-full bg-surface-container text-on-surface font-label-md text-label-md">📤 從備份還原</button>' +
+      '<button type="button" id="teacher-menu-protect-btn" class="w-full h-14 rounded-full bg-surface-container text-on-surface font-label-md text-label-md">🛡️ 資料保護狀態</button>' +
       '</div>'
     );
     document.getElementById('teacher-menu-dashboard-btn').addEventListener('click', renderTeacherDashboard);
-    document.getElementById('teacher-menu-export-btn').addEventListener('click', exportAllStudentData);
+    document.getElementById('teacher-menu-manage-btn').addEventListener('click', renderManageStudents);
+    document.getElementById('teacher-menu-export-btn').addEventListener('click', function () { exportAllStudentData(); refreshTeacherBtnHint(); });
+    document.getElementById('teacher-menu-restore-btn').addEventListener('click', openRestorePicker);
+    document.getElementById('teacher-menu-protect-btn').addEventListener('click', renderDataProtection);
   }
 
   function openTeacherArea() {
@@ -2588,4 +2787,5 @@
   // 一台平板給多位學生共用：每次打開都先回到「選名字」畫面，不自動進入上一位的資料，
   // 避免下一位小朋友直接寫進前一位的日記、澆到前一位的水。各人資料仍分開存。
   renderProfileList();
+  refreshTeacherBtnHint();
 })();
