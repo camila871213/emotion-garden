@@ -2585,11 +2585,7 @@
   });
 
   renderAvatarPicker();
-  var initialActiveId = getActiveProfileId();
-  var initialProfiles = loadProfiles();
-  if (initialActiveId && initialProfiles.some(function (p) { return p.id === initialActiveId; })) {
-    enterApp(initialActiveId);
-  } else {
-    renderProfileList();
-  }
+  // 一台平板給多位學生共用：每次打開都先回到「選名字」畫面，不自動進入上一位的資料，
+  // 避免下一位小朋友直接寫進前一位的日記、澆到前一位的水。各人資料仍分開存。
+  renderProfileList();
 })();
