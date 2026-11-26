@@ -87,8 +87,11 @@ tailwind.config={darkMode:"class",theme:{extend:{
         <span class="w-7 h-7 rounded-full bg-primary-fixed flex items-center justify-center text-[16px]" id="profile-switch-avatar">🌱</span>
         <span class="font-label-sm text-label-sm text-on-surface whitespace-nowrap" id="profile-switch-name">訪客</span>
       </button>
-      <button aria-label="靜心音樂開關" id="ambient-toggle-btn" class="flex items-center justify-center w-10 h-10 rounded-full bg-surface-container-low text-primary hover:bg-surface-container-high hover:text-on-surface transition-colors" type="button">
+      <button aria-label="按鈕音效開關" id="ambient-toggle-btn" title="按鈕音效開關（不影響朗讀和影片）" class="flex items-center justify-center w-10 h-10 rounded-full bg-surface-container-low text-primary hover:bg-surface-container-high hover:text-on-surface transition-colors" type="button">
         <span class="material-symbols-outlined text-[20px]" id="ambient-toggle-icon">volume_off</span>
+      </button>
+      <button aria-label="朗讀開關" id="voice-toggle-btn" title="朗讀開關：關掉後不會自動念出文字，想聽時按「聽一聽」" class="flex items-center justify-center w-10 h-10 rounded-full bg-surface-container-low text-primary hover:bg-surface-container-high hover:text-on-surface transition-colors" type="button">
+        <span class="material-symbols-outlined text-[20px]" id="voice-toggle-icon">record_voice_over</span>
       </button>
       <button aria-label="簡化動畫開關" id="motion-toggle-btn" title="簡化動畫（適合感官敏感的孩子）" class="flex items-center justify-center w-10 h-10 rounded-full bg-surface-container-low text-primary hover:bg-surface-container-high hover:text-on-surface transition-colors" type="button">
         <span class="material-symbols-outlined text-[20px]" id="motion-toggle-icon">animation</span>

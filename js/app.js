@@ -74,8 +74,12 @@
     SPEECH_FIXES.forEach(function (f) { t = t.replace(f[0], f[1]); });
     return t.replace(/\s+/g, ' ').trim();
   }
-  function speak(text) {
+  // 朗讀開關（每位學生自己的設定，預設開）：關掉時不會「自動」念；學生自己按「聽一聽／再聽一次」按鈕（force）還是會念。
+  // 注意：這個開關只管朗讀（speechSynthesis），絕對不碰叢林的 <video> 影片聲音，也跟「按鈕音效開關」無關。
+  var voiceEnabled = true;
+  function speak(text, force) {
     if (!text || !('speechSynthesis' in window)) return;
+    if (!voiceEnabled && !force) return;
     text = speechText(text);
     if (!text) return;
     window.speechSynthesis.cancel(); // 避免上一句還沒念完，新的一句就疊上來搶著念
@@ -137,7 +141,7 @@
   // 掛在共同祖先上一次即可涵蓋所有動態插入的 renderSimplifiedCard 播放按鈕
   document.addEventListener('click', function (e) {
     var btn = e.target.closest && e.target.closest('.simplified-speak-btn');
-    if (btn) speak(btn.dataset.speak);
+    if (btn) speak(btn.dataset.speak, true); // 學生自己按的朗讀按鈕：不受朗讀開關影響
   });
 
   // 簡單／中等難度的文字呈現：用「注音字型」直接把注音畫在國字右側（國小課本排法），不再用程式疊注音。
@@ -211,6 +215,7 @@
       diaryEntries: [],
       lastEntryDate: null,
       currentMood: null,
+      voiceOn: true, // 朗讀開關：false＝不自動念出文字（影片聲音不受影響）
       reducedMotion: false, // 感官調節：關閉非必要的動畫效果（草地走動、彈開、閃光、蹦跳登場等）
       jungleProgress: {} // 叢林冒險每一關的學習紀錄，key 是關卡索引：{ completed, attempts, wrong }
     };
@@ -1391,6 +1396,25 @@
     }
   });
 
+  // ---------- 朗讀開關（學生自己決定要不要自動念出文字題目） ----------
+  function renderVoiceToggle() {
+    var btn = document.getElementById('voice-toggle-btn');
+    var icon = document.getElementById('voice-toggle-icon');
+    voiceEnabled = !state || state.voiceOn !== false;
+    icon.textContent = voiceEnabled ? 'record_voice_over' : 'voice_over_off';
+    btn.classList.toggle('bg-primary-fixed', voiceEnabled);
+    btn.setAttribute('aria-pressed', voiceEnabled ? 'true' : 'false');
+    btn.title = voiceEnabled ? '朗讀：開。點一下關閉（影片聲音不受影響）' : '朗讀：關。點一下打開；想聽時可按「聽一聽」';
+  }
+  document.getElementById('voice-toggle-btn').addEventListener('click', function () {
+    if (!state) return;
+    state.voiceOn = state.voiceOn === false; // false → true，其餘 → false
+    saveState();
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel(); // 關掉時，正在念的那句也停下來
+    renderVoiceToggle();
+    if (voiceEnabled) speak(isSimplified() ? '朗讀打開了' : '朗讀已開啟', true);
+  });
+
   // ---------- 感官調節：簡化動畫開關 ----------
   function renderMotionToggle() {
     var btn = document.getElementById('motion-toggle-btn');
@@ -2144,6 +2168,11 @@
       '<button type="button" id="jungle-video-replay" class="px-space-lg h-14 rounded-full bg-white text-on-surface font-label-md text-label-md shadow-lg flex items-center gap-1.5">🔄 ' + phoneticText('再看一次') + '</button>' +
       '<button type="button" id="jungle-video-answer" class="px-space-lg h-14 rounded-full bg-primary text-on-primary font-label-md text-label-md shadow-lg flex items-center gap-1.5">❓ ' + phoneticText('回答問題') + '</button></div>';
     var v = document.getElementById('jungle-video');
+    // 影片聲音永遠不能被關掉：不靜音、音量全開；播放時停掉朗讀，免得兩個聲音疊在一起；
+    // 就算影片控制列的靜音鈕被按到，也立刻恢復有聲
+    v.muted = false; v.volume = 1;
+    v.addEventListener('play', function () { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); });
+    v.addEventListener('volumechange', function () { if (v.muted) v.muted = false; });
     v.addEventListener('error', function () {
       if (jungleScreen === 'play' && jungleActiveIdx === idx) { delete JUNGLE_VIDEOS[idx + 1]; enterScenario(idx); }
     });
@@ -2354,9 +2383,10 @@
     }
     refreshDewBadges();
     renderMotionToggle();
+    renderVoiceToggle();
   }
 
-  function chooseProfile(id) { enterApp(id); }
+  function chooseProfile(id) { closeModal(); enterApp(id); } // 登入／設定密碼的彈窗要先關掉，不然會蓋在進入後的畫面上
 
   // 步驟一：填名字/頭像/密碼 → 驗證通過後不直接建立資料，先跳到步驟二（獨立全螢幕選難度）
   document.getElementById('profile-create-btn').addEventListener('click', function () {
