@@ -1900,7 +1900,9 @@
   // 每一關的 AI 故事影片（第一人稱社會性故事）。檔案放進 assets/jungle-videos/，再在這裡填上「關卡編號: 檔名」即可，例如：
   //   1: 'assets/jungle-videos/level-01.mp4',
   // 沒填（或影片載入失敗）的關卡，會自動改用圖示＋文字的四格故事當作退回方案。
-  var JUNGLE_VIDEOS = {};
+  var JUNGLE_VIDEOS = {
+    2: 'assets/jungle-videos/level-02.mp4'
+  };
 
   // 左上角固定顯示「第幾關」（15 關的總編號，不再顯示處己／處人／處環境這些分類名稱）
   function levelText(num) {
